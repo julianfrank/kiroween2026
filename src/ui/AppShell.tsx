@@ -7,7 +7,8 @@ import type { LoadedData } from '../store/repo';
 import { Ambient, Ghost, Pumpkin } from '../theme/Decor';
 import { EntryAnimation } from '../theme/EntryAnimation';
 import { eventFromEntry, type EntryEvent } from '../theme/events';
-import { netWorthState, STATE_TEXT, useTheme } from '../theme/theme';
+import { netWorthState, useTheme } from '../theme/theme';
+import { GhostNote } from '../theme/GhostNote';
 import { appTitle } from './title';
 import type { Vault } from '../store/vault';
 import { ChatPanel, type Incoming } from './ChatPanel';
@@ -16,6 +17,16 @@ import { AccountList, BudgetsList, DailyList, GoalsList } from './lists';
 
 type TabId = 'dashboard' | ChatTabId | 'data';
 const ORDER: TabId[] = ['dashboard', 'assets', 'liabilities', 'goals', 'budgets', 'daily', 'data'];
+/** Decorative only: the emojis are hidden from screen readers, so each tab's name stays its label. */
+const EMOJI: Record<TabId, string> = {
+  dashboard: '🔮',
+  assets: '🎃',
+  liabilities: '⛓️',
+  goals: '🌕',
+  budgets: '🧪',
+  daily: '📜',
+  data: '🗝️',
+};
 const LABEL = (t: TabId) => (t === 'dashboard' ? 'Dashboard' : t === 'data' ? 'Data and password' : TAB_LABELS[t]);
 
 export function AppShell({
@@ -71,9 +82,7 @@ export function AppShell({
       <header className="app-header">
         {state === 'light' ? <Pumpkin /> : <Ghost />}
         <h1 className="visually-hidden">{appTitle(assets - liabilities)}</h1>
-        <span className="state-chip" role="status" data-state={state}>
-          {STATE_TEXT[state].title}: {STATE_TEXT[state].line}
-        </span>
+        <GhostNote data={data} />
       </header>
       <nav aria-label="Main tabs" style={{ margin: '12px 0' }}>
         {ORDER.filter((t) => t !== 'data' || dataPanel).map((t) => (
@@ -83,7 +92,8 @@ export function AppShell({
             onClick={() => setTab(t)}
             style={{ fontWeight: t === tab ? 700 : 400, marginRight: 6 }}
           >
-            {LABEL(t)}
+            <span className="tab-emoji" aria-hidden="true">{EMOJI[t]}</span>
+            <span className="tab-label">{LABEL(t)}</span>
           </button>
         ))}
       </nav>

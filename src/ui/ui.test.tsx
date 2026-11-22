@@ -157,7 +157,7 @@ describe('the six tabs', () => {
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
     expect(container.querySelector('.ambient')?.getAttribute('data-state')).toBe('dark');
     expect(container.querySelector('.cobweb')).not.toBeNull();
-    expect(screen.getByText(/Lights out/)).toBeTruthy();
+    expect(container.querySelector('.ghost-note')?.getAttribute('data-state')).toBe('dark'); // the note is rewritten for the new state
     const anim = await screen.findByRole('status', { name: /Money spent: ₹2,00,000, Cash to Rent/ });
     expect(anim.className).toContain('v-poof');
   });
@@ -201,7 +201,10 @@ describe('the six tabs', () => {
   it('Data and password is the last main tab when the panel is given', () => {
     const { data } = world([expense]);
     render(<AppShell data={data} vault={{} as Vault} host={{ prompt: async () => '' }} onChanged={() => {}} dataPanel={<p>panel body</p>} />);
-    const names = within(screen.getByRole('navigation', { name: 'Main tabs' })).getAllByRole('button').map((b) => b.textContent);
+    const buttons = within(screen.getByRole('navigation', { name: 'Main tabs' })).getAllByRole('button');
+    const names = buttons.map((b) => b.querySelector('.tab-label')!.textContent);
+    expect(buttons.map((b) => b.querySelector('.tab-emoji')!.textContent)).toEqual(['🔮', '🎃', '⛓️', '🌕', '🧪', '📜', '🗝️']);
+    expect(buttons.every((b) => b.querySelector('.tab-emoji')!.getAttribute('aria-hidden') === 'true')).toBe(true);
     expect(names).toEqual(['Dashboard', 'Assets', 'Liabilities', 'Goals', 'Budgets', 'Daily Updates', 'Data and password']);
     expect(screen.getByText('panel body').closest('[hidden]')).not.toBeNull();
     fireEvent.click(tab('Data and password'));

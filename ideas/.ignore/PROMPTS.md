@@ -26,3 +26,8 @@ Similarly Tagging to Goals for Savings/Investment Accounts and Budget for Expens
 The Dashbaord should show as a Key highlight a Sankey Diagram Charting the On Date Income to Expense to Budgets & Goals in a single picture
 Other Personal Finance Related Graphs should also be poulated in real time like Trends for Income vs Expense vs Budget, Income vs Investments/Savings vs Goals etc
 
+
+
+----------------------------
+
+Gothrough the rules of the Kiroween content in https://kiroween.devpost.com/rules and then help me Make the right choices for submission in https://kiroween.devpost.com/ 

@@ -112,7 +112,7 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   // Spending more than the net worth turns the lights out at once.
   await say(page, 'Daily Updates', 'Paid 50000 for rent');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.getByText(/Lights out/)).toBeVisible();
+  await expect(page.locator('.ghost-note')).toHaveAttribute('data-state', 'dark');
   await expect(banner.getByText('Scary Money Manager')).toBeVisible(); // net worth went below zero
   await expect(page).toHaveTitle('Scary Money Manager');
 

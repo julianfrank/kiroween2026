@@ -19,3 +19,6 @@ The look of every screen before the main app: the model loader, the password scr
 - Use the crypt variables (`--accent` orange, `--accent2` and `--good` green, `--bad` red). Never use the main app's purple.
 - The ghost is an original drawing in the spirit of Kiro's mascot, not the official logo. If you have the right to use the official Kiro ghost artwork, replace the drawing in `KiroGhost` and keep the `mood-*` classes.
 - Decoration stays `aria-hidden` and never takes pointer events.
+
+## The ghost's hand (the note under the title)
+The same restraint applies inside the main app. One line of handwriting sits under the title, written by a small ghost whose quill scratches at the tip of the ink. Each new letter lands with a brief bleed, as if it were soaking into paper. When the line is finished the quill disappears and the ghost bobs and waits. Minutes later the ink lifts away and a new line takes its place. The joke is always true: every line names a real figure from the books, so the humour stays honest. Ink takes the theme's accent colour, glowing only after dark.

@@ -74,3 +74,7 @@ Multi-currency, live exchange rates, weekly/quarterly budgets, budget carry-over
 
 ## 15. Sample datasets (added after Task 12)
 - The password screen offers **Try a sample** once the password is long enough: "Sample that ends below zero" and "Sample that ends above zero". Each deletes any existing database (after a warning), then creates one with the typed password holding opening balances, 25 transactions dated over the last 30 days up to today (IST), budgets and goals, so every tab has data.
+
+## 16. The ghost's note and tab emojis (added after Task 12)
+- Under the title, a handwritten line about the user's actual situation (net worth, this month's income and spending, budgets, goals, debts) is written out letter by letter by a ghost with a quill. After it is fully written it stays for a random 120 to 240 seconds, then a new line is written. Crossing into another Net Worth State rewrites it at once.
+- The main tabs show Halloween emojis: Dashboard 🔮, Assets 🎃, Liabilities ⛓️, Goals 🌕, Budgets 🧪, Daily Updates 📜, Data and password 🗝️.

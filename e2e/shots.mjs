@@ -79,7 +79,9 @@ for (const [label, name] of [['Sample that ends below zero', '7-sample-negative'
   await p.getByRole('button', { name: 'Try a sample' }).click();
   await p.getByRole('button', { name: label }).click();
   await p.getByRole('navigation', { name: 'Main tabs' }).waitFor();
-  await settle(p);
+  await p.waitForTimeout(1500);
+  await p.screenshot({ path: `${OUT}/${name}-writing.png`, clip: { x: 0, y: 0, width: 1280, height: 200 } });
+  await p.waitForTimeout(6000);
   await p.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
 }
 await browser.close();
