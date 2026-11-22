@@ -52,6 +52,11 @@ async function setUp(page: Page) {
   await expect(page.getByText('There is no database in this browser yet.')).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'crypt');
   await expect(page.locator('.crypt-scene .flyer')).toHaveCount(5);
+  const header = page.getByRole('banner', { name: 'About this app' });
+  await expect(header).toBeVisible();
+  await expect(header).toHaveCSS('position', 'fixed');
+  await expect(header.getByRole('link', { name: /Made with Kiro/ })).toHaveAttribute('href', 'https://kiro.dev');
+  await expect(header.getByText(/^v\d+\.\d+\.\d+/)).toBeVisible();
   await page.getByPlaceholder('Password', { exact: true }).fill('short');
   await expect(page.getByRole('button', { name: 'Start New Database' })).toHaveCount(0); // 7 characters minimum
   await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
@@ -68,7 +73,7 @@ async function setUp(page: Page) {
   await page.getByRole('button', { name: 'Use difference' }).click();
   await expect(page.getByText('Imbalance: ₹0')).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.getByRole('heading', { name: 'Scary Money Manager' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Main tabs' })).toBeVisible();
 }
 
 async function say(page: Page, tab: string, message: string) {
@@ -90,6 +95,7 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
 
   await setUp(page);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.getByRole('banner', { name: 'About this app' })).toBeVisible(); // the header stays on the main app too
 
   // A chat entry: proposed, confirmed, saved, animated, listed with an IST DD/MMM/YYYY date.
   await say(page, 'Daily Updates', 'Paid Rs.800 for groceries yesterday');
@@ -144,7 +150,7 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   await fresh.waitForTimeout(1200);
   await fresh.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
   await fresh.getByRole('button', { name: 'Open this file' }).click();
-  await expect(fresh.getByRole('heading', { name: 'Scary Money Manager' })).toBeVisible();
+  await expect(fresh.getByRole('navigation', { name: 'Main tabs' })).toBeVisible();
   await expect(fresh.locator('html')).toHaveAttribute('data-theme', 'dark');
   const destroyed = await fresh.evaluate(() => (window as unknown as { __destroyed: number }).__destroyed);
   expect(destroyed).toBeGreaterThanOrEqual(1); // the AI session was destroyed on import

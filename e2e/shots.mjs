@@ -62,6 +62,10 @@ const settle = (p) => p.waitForTimeout(1600);
   await p.getByRole('button', { name: 'Use difference' }).click();
   await settle(p);
   await p.screenshot({ path: `${OUT}/4-setup-balanced.png`, fullPage: true });
+  await p.getByRole('button', { name: 'Continue' }).click();
+  await p.getByRole('navigation', { name: 'Main tabs' }).waitFor();
+  await settle(p);
+  await p.screenshot({ path: `${OUT}/6-main-header.png` });
 }
 {
   const p = await page('ready', 390, 844);

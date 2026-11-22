@@ -29,7 +29,7 @@ export function Readiness({ state, onStart }: { state: ReadinessState; onStart: 
       <div className="sentry">
         <KiroGhost size={64} mood={trouble ? 'worried' : state.step === 'ready' ? 'cheer' : 'lantern'} />
       </div>
-      <h1>Scary Money Manager</h1>
+      <h1>Waking the on-device AI</h1>
       <p>Getting the on-device AI ready. Nothing leaves your computer.</p>
 
       {state.step === 'unsupported' && <p role="alert">{state.reason}</p>}
