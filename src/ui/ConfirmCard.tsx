@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDate } from '../dates/dates';
-import { resolveDraft, type EntryDraft, type ResolveContext } from '../chat/draft';
+import { resolveAny, type EntryDraft, type ResolveContext } from '../chat/draft';
 import { INTENTS, TAB_SCOPES, type ChatTabId } from '../chat/intents';
 import { formatRupees } from '../money/money';
 
@@ -12,38 +12,49 @@ export function ConfirmCard({
   ctx,
   onConfirm,
   onCancel,
+  askReason,
+  title,
 }: {
   tab: ChatTabId;
   initial: EntryDraft;
   questions: string[];
   ctx: ResolveContext;
-  onConfirm: (draft: EntryDraft) => Promise<void>;
+  onConfirm: (draft: EntryDraft, reason: string) => Promise<void>;
   onCancel: () => void;
+  /** When set, the user must say why (used for corrections). */
+  askReason?: boolean;
+  title?: string;
 }) {
   const [draft, setDraft] = useState(initial);
+  const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const set = (patch: Partial<EntryDraft>) => setDraft((d) => ({ ...d, ...patch }));
 
-  const result = resolveDraft(draft, ctx);
+  const result = resolveAny(draft, ctx);
   const intent = draft.intent ? INTENTS[draft.intent] : null;
   const accountNames = (kind: string | null) =>
     [...ctx.accounts.values()].filter((a) => a.kind === kind && !a.system).map((a) => a.name);
+  const needReason = askReason && reason.trim() === '';
 
   async function confirm() {
     setSaving(true);
     setError('');
     try {
-      await onConfirm(draft);
+      await onConfirm(draft, reason.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setSaving(false);
     }
   }
 
+  // A correction can be of an entry from another tab's scope, so keep its own intent in the list.
+  const base = TAB_SCOPES[tab];
+  const intents = draft.intent && !base.includes(draft.intent) ? [...base, draft.intent] : base;
+
   return (
     <div style={{ border: '2px solid #888', borderRadius: 8, padding: 12, margin: '8px 0' }}>
-      <strong>{result.ok ? 'Please confirm this entry' : 'I need a few details'}</strong>
+      <strong>{title ?? (result.ok ? 'Please confirm' : 'I need a few details')}</strong>
       {questions.map((q) => (
         <div key={q}>{q}</div>
       ))}
@@ -56,24 +67,34 @@ export function ConfirmCard({
           onChange={(e) => set({ intent: (e.target.value || null) as EntryDraft['intent'] })}
         >
           <option value="">Choose…</option>
-          {TAB_SCOPES[tab].map((id) => (
+          {intents.map((id) => (
             <option key={id} value={id}>
               {INTENTS[id].label}
             </option>
           ))}
         </select>
 
-        <label htmlFor="cc-amount">{draft.intent === 'revalue' ? 'New value (₹)' : 'Amount (₹)'}</label>
+        <label htmlFor="cc-amount">{intent?.amountLabel ?? 'Amount (₹)'}</label>
         <input id="cc-amount" value={draft.amountText} inputMode="decimal" onChange={(e) => set({ amountText: e.target.value })} />
 
-        <label htmlFor="cc-date">Date (IST)</label>
-        <input
-          id="cc-date"
-          value={draft.dateText}
-          placeholder={`today, yesterday or DD/MMM/YYYY (${formatDate(ctx.today)})`}
-          onChange={(e) => set({ dateText: e.target.value })}
-        />
+        {(!intent?.target || intent.dateLabel) && (
+          <>
+            <label htmlFor="cc-date">{intent?.dateLabel ?? 'Date (IST)'}</label>
+            <input
+              id="cc-date"
+              value={draft.dateText}
+              placeholder={intent?.dateLabel ? 'DD/MMM/YYYY or Dec 2027' : `today, yesterday or DD/MMM/YYYY (${formatDate(ctx.today)})`}
+              onChange={(e) => set({ dateText: e.target.value })}
+            />
+          </>
+        )}
 
+        {intent?.nameLabel && (
+          <>
+            <label htmlFor="cc-name">{intent.nameLabel}</label>
+            <input id="cc-name" value={draft.fromName} onChange={(e) => set({ fromName: e.target.value })} />
+          </>
+        )}
         {intent?.fromKind && (
           <>
             <label htmlFor="cc-from">{intent.fromLabel}</label>
@@ -96,21 +117,33 @@ export function ConfirmCard({
             </datalist>
           </>
         )}
+        {askReason && (
+          <>
+            <label htmlFor="cc-reason">Why is this being corrected?</label>
+            <input id="cc-reason" value={reason} placeholder="e.g. typed 5000, was 6000" onChange={(e) => setReason(e.target.value)} />
+          </>
+        )}
       </div>
 
       {result.ok ? (
         <>
-          <div>
-            {result.lines.map((l) => (
-              <div key={l.side}>
-                {l.side} <b>{l.accountName}</b> {formatRupees(l.amount)}
-              </div>
-            ))}
+          {result.kind === 'entry' ? (
             <div>
-              Dated <b>{formatDate(result.entry.date)}</b>
+              {result.lines.map((l) => (
+                <div key={l.side}>
+                  {l.side} <b>{l.accountName}</b> {formatRupees(l.amount)}
+                </div>
+              ))}
+              <div>
+                Dated <b>{formatDate(result.entry.date)}</b>
+              </div>
+              <div style={{ opacity: 0.8 }}>Note: {result.entry.note}</div>
             </div>
-            <div style={{ opacity: 0.8 }}>Note: {result.entry.note}</div>
-          </div>
+          ) : (
+            <div>
+              <b>{result.summary}</b>
+            </div>
+          )}
           {result.warnings.map((w) => (
             <div key={w} role="status" style={{ color: '#a60' }}>
               {w}
@@ -126,7 +159,7 @@ export function ConfirmCard({
       )}
 
       <div style={{ marginTop: 8 }}>
-        <button disabled={!result.ok || saving} onClick={confirm}>
+        <button disabled={!result.ok || saving || needReason} onClick={confirm}>
           {saving ? 'Saving…' : 'Confirm'}
         </button>{' '}
         <button disabled={saving} onClick={onCancel}>

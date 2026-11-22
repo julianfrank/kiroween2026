@@ -52,10 +52,10 @@ export class Ledger {
     return false;
   }
 
-  /** Post a Reversal that cancels `key` exactly. The note says why. */
-  reverse(key: string, date: string, reason: string): string {
+  /** The Reversal entry for `key` (not stored). The note says what it cancels and why. */
+  planReversal(key: string, date: string, reason: string): Entry {
     const original = this.mustGet(key);
-    return this.append({
+    return {
       date,
       note: `Reversal of ${key} (${original.note}): ${reason}`,
       lines: original.lines.map((l) => ({
@@ -67,7 +67,25 @@ export class Ledger {
       reverses: key,
       correctionOf: null,
       source: original.source,
-    });
+    };
+  }
+
+  /** Post a Reversal that cancels `key` exactly. The note says why. */
+  reverse(key: string, date: string, reason: string): string {
+    return this.append(this.planReversal(key, date, reason));
+  }
+
+  /** Net movement of one account between two dates (inclusive), in its normal direction. */
+  movement(accountKey: string, from: string, to: string): Rupees {
+    const account = this.accounts.get(accountKey);
+    if (!account) throw new Error(`Unknown account ${accountKey}`);
+    let sum = 0;
+    for (const e of this._entries.values()) {
+      if (e.date < from || e.date > to) continue;
+      for (const l of e.lines) if (l.account === accountKey) sum += l.debitRupees - l.creditRupees;
+    }
+    if (sum === 0) return 0;
+    return DEBIT_NORMAL.has(account.kind) ? sum : -sum;
   }
 
   /** Reverse `key`, then post the corrected entry. Returns both new keys. */

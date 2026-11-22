@@ -56,7 +56,7 @@ The app exports one JSON file and offers this template as a separate download. D
 - Total debits must equal total credits.
 - `kind`: `opening | normal | revaluation | reversal | correction`.
 - `reverses` is the key of the entry a reversal cancels. `correctionOf` links a correction to the original.
-- `source`: `setup | ai-confirmed | manual-form`.
+- `source`: `setup | ai-confirmed | manual-form`.`n- `intent` (optional, absent on opening entries): `income | expense | transfer | borrow | repay | revalue`. It lets the app rebuild a correction form. Reversals dated like the original so period totals cancel.
 
 ### `budget:*`
 ```json

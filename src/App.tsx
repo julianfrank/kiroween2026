@@ -7,9 +7,9 @@ import {
   type ReadinessState,
 } from './ai/readiness';
 import { IndexedDbKV } from './store/kv';
-import { loadAll, saveSetup, type LoadedData } from './store/repo';
+import { emptyTargets, loadAll, saveSetup, type LoadedData } from './store/repo';
 import type { Vault } from './store/vault';
-import { MainPlaceholder } from './ui/MainPlaceholder';
+import { AppShell } from './ui/AppShell';
 import { PasswordScreen } from './ui/PasswordScreen';
 import { Readiness } from './ui/Readiness';
 import { SetupScreen } from './ui/SetupScreen';
@@ -51,13 +51,13 @@ export function App() {
       <SetupScreen
         onDone={async ({ accounts, ledger }) => {
           await saveSetup(vault, accounts, ledger.entries);
-          setData({ accounts, ledger });
+          setData({ accounts, ledger, ...emptyTargets() });
         }}
       />
     );
   }
   return (
-    <MainPlaceholder
+    <AppShell
       data={data}
       vault={vault}
       host={host}

@@ -2,7 +2,8 @@ import type { PromptOptions } from '../ai/readiness';
 import type { Account } from '../ledger/types';
 import { formatDate } from '../dates/dates';
 import type { Rupees } from '../money/money';
-import { blankDraft, resolveDraft, type EntryDraft, type Problem, type Resolved } from './draft';
+import { blankDraft, resolveAny, type AnyResolved, type EntryDraft, type Problem } from './draft';
+import type { Budget, Goal } from '../targets/types';
 import { chooseAmountText } from './amounts';
 import { ALL_INTENTS, INTENTS, TAB_LABELS, TAB_SCOPES, type ChatTabId, type IntentId } from './intents';
 
@@ -88,7 +89,7 @@ export function buildPrompt(args: {
 }
 
 export type Outcome =
-  | { type: 'confirm'; draft: EntryDraft; resolved: Resolved }
+  | { type: 'confirm'; draft: EntryDraft; resolved: AnyResolved }
   | { type: 'needs-input'; draft: EntryDraft; problems: Problem[] }
   | { type: 'redirect'; tab: ChatTabId; draft: EntryDraft }
   | { type: 'error'; message: string };
@@ -98,6 +99,8 @@ export interface ProposeArgs {
   message: string;
   today: string;
   accounts: ReadonlyMap<string, Account>;
+  budgets?: ReadonlyMap<string, Budget>;
+  goals?: ReadonlyMap<string, Goal>;
   balanceOf: (accountKey: string) => Rupees;
   makeId?: (prefix: string) => string;
 }
@@ -152,7 +155,7 @@ export async function proposeEntry(host: PromptHost, args: ProposeArgs): Promise
     }
 
     const draft = draftFrom(p, args.message);
-    const r = resolveDraft(draft, args);
+    const r = resolveAny(draft, args);
     if (r.ok) return { type: 'confirm', draft, resolved: r };
 
     const fixable = r.problems.filter((x) => x.code === 'account-kind');

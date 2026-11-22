@@ -265,7 +265,7 @@ describe('commitEntry', () => {
     const kv = new MemoryKV();
     const vault = await createVault(kv, 'pw', 1000);
     await saveSetup(vault, accounts, ledger.entries);
-    return { kv, vault, data: { accounts, ledger } };
+    return { kv, vault, data: { accounts, ledger, budgets: new Map(), goals: new Map() } };
   }
 
   it('saves a confirmed entry and a new account encrypted, and they survive a reload', async () => {

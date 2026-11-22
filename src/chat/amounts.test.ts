@@ -113,6 +113,7 @@ describe('repaying a loan', () => {
     expect(out.type).toBe('confirm');
     if (out.type !== 'confirm') return;
     expect(out.draft.amountText).toBe('3000000');
+    if (out.resolved.kind !== 'entry') throw new Error('expected an entry');
     expect(out.resolved.lines.map((l) => l.amount)).toEqual([3_000_000, 3_000_000]);
     ledger.append(out.resolved.entry);
     expect(ledger.balance(id('Personal Loan - Dubakur Bank'))).toBe(7_000_000);

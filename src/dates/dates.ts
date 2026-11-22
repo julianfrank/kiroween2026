@@ -12,6 +12,14 @@ const istParts = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 });
 
+/** First and last day (ISO) of the calendar month that contains `iso`. */
+export function monthRange(iso: string): { from: string; to: string } {
+  const [y, m] = iso.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const mm = String(m).padStart(2, '0');
+  return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(last).padStart(2, '0')}` };
+}
+
 /** Today's date in IST, as YYYY-MM-DD, regardless of the computer's time zone. */
 export function todayIso(now: Date = new Date()): string {
   return istParts.format(now); // en-CA formats as YYYY-MM-DD

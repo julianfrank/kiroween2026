@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PromptHost } from '../chat/proposal';
-import { proposeEntry, type Outcome } from '../chat/proposal';
-import { resolveDraft, type EntryDraft } from '../chat/draft';
+import { proposeEntry, type Outcome, type PromptHost } from '../chat/proposal';
+import { resolveAny, type EntryDraft } from '../chat/draft';
 import { TAB_LABELS, TAB_SCOPES, type ChatTabId } from '../chat/intents';
 import { formatDate, todayIso } from '../dates/dates';
-import { formatRupees } from '../money/money';
-import { commitEntry, type LoadedData } from '../store/repo';
+import { commitEntry, commitTarget, type LoadedData } from '../store/repo';
 import type { Vault } from '../store/vault';
 import { ConfirmCard } from './ConfirmCard';
 
@@ -19,6 +17,14 @@ export interface Incoming {
   id: number;
   text: string;
 }
+
+const PLACEHOLDERS: Record<ChatTabId, string> = {
+  daily: 'Paid Rs.800 for groceries yesterday',
+  assets: 'My Delhi flat is now worth 85L',
+  liabilities: "I've taken a loan of Rs.5000 from Tom",
+  goals: 'Save 3L for an emergency fund by Dec 2027',
+  budgets: 'Set a monthly budget of 8000 for Food',
+};
 
 let nextId = 1;
 
@@ -50,6 +56,8 @@ export function ChatPanel({
 
   const ctx = () => ({
     accounts: data.accounts,
+    budgets: data.budgets,
+    goals: data.goals,
     today: todayIso(),
     balanceOf: (key: string) => data.ledger.balance(key),
   });
@@ -58,10 +66,6 @@ export function ChatPanel({
     const m = message.trim();
     if (!m || busy) return;
     push({ id: nextId++, kind: 'user', text: m });
-    if (TAB_SCOPES[tab].length === 0) {
-      push({ id: nextId++, kind: 'info', text: `Chat in ${TAB_LABELS[tab]} is not available yet.` });
-      return;
-    }
     setBusy(true);
     const outcome: Outcome = await proposeEntry(host, { tab, message: m, ...ctx() });
     setBusy(false);
@@ -95,18 +99,25 @@ export function ChatPanel({
   }, [incoming]);
 
   async function confirm(item: Extract<Item, { kind: 'card' }>, draft: EntryDraft) {
-    const r = resolveDraft(draft, ctx());
+    const r = resolveAny(draft, ctx());
     if (!r.ok) throw new Error(r.problems.map((p) => p.message).join(' '));
-    const key = await commitEntry(vault, data, r.newAccounts, r.entry);
-    patch(item.id, { state: 'saved', savedText: `Saved ${formatDate(r.entry.date)}: ${r.entry.note} (${key})` });
+    let savedText: string;
+    if (r.kind === 'entry') {
+      const key = await commitEntry(vault, data, r.newAccounts, r.entry);
+      savedText = `Saved ${formatDate(r.entry.date)}: ${r.entry.note} (${key})`;
+    } else {
+      await commitTarget(vault, data, r.newAccounts, r.kind === 'budget' ? { kind: 'budget', key: r.key, budget: r.budget } : { kind: 'goal', key: r.key, goal: r.goal });
+      savedText = `Saved: ${r.summary}`;
+    }
+    patch(item.id, { state: 'saved', savedText });
     onChanged();
   }
 
   const lastMessage = [...items].reverse().find((i) => i.kind === 'user') as { text: string } | undefined;
 
   return (
-    <section aria-label={`${TAB_LABELS[tab]} chat`} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 12 }}>
-      <div style={{ minHeight: 80 }}>
+    <section aria-label={`${TAB_LABELS[tab]} chat`} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 12, margin: '8px 0' }}>
+      <div style={{ minHeight: 40 }}>
         {items.map((it) => {
           if (it.kind === 'user') return <div key={it.id}><b>You:</b> {it.text}</div>;
           if (it.kind === 'info') return <div key={it.id}>{it.text}</div>;
@@ -157,18 +168,12 @@ export function ChatPanel({
           aria-label="Message"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={
-            tab === 'liabilities'
-              ? "I've taken a loan of Rs.5000 from Tom"
-              : tab === 'daily'
-                ? 'Paid Rs.800 for groceries yesterday'
-                : 'Type what happened'
-          }
+          placeholder={PLACEHOLDERS[tab]}
           style={{ width: '70%' }}
         />{' '}
         <button type="submit" disabled={busy}>Send</button>
       </form>
-      <div style={{ opacity: 0.6 }}>Net worth now {formatRupees(data.ledger.netWorth())}</div>
+      <div style={{ opacity: 0.6, fontSize: 12 }}>This tab handles: {TAB_SCOPES[tab].join(', ')}</div>
     </section>
   );
 }

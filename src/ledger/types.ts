@@ -1,3 +1,4 @@
+import type { IntentId } from '../chat/intents';
 import type { Rupees } from '../money/money';
 
 export type AccountKind = 'asset' | 'liability' | 'equity' | 'income' | 'expense';
@@ -34,6 +35,8 @@ export interface Entry {
   /** Key of the original entry this one corrects. */
   correctionOf: string | null;
   source: EntrySource;
+  /** What kind of chat entry this was, so it can be corrected later. Absent on opening entries. */
+  intent?: IntentId;
 }
 
 /** Debit-normal kinds grow with debits; the others grow with credits. */

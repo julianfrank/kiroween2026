@@ -10,7 +10,15 @@ export const TAB_LABELS: Record<ChatTabId, string> = {
   daily: 'Daily Updates',
 };
 
-export type IntentId = 'income' | 'expense' | 'transfer' | 'borrow' | 'repay' | 'revalue';
+export type IntentId =
+  | 'income'
+  | 'expense'
+  | 'transfer'
+  | 'borrow'
+  | 'repay'
+  | 'revalue'
+  | 'set-budget'
+  | 'set-goal';
 
 /** Money always flows from the credit account to the debit account. */
 export interface IntentDef {
@@ -18,7 +26,7 @@ export interface IntentDef {
   label: string;
   /** One line for the model prompt. */
   hint: string;
-  /** "to": the account that is debited. */
+  /** "to": the account that is debited (for targets: the account the target attaches to). */
   toKind: AccountKind;
   toLabel: string;
   /** "from": the account that is credited. Null when the intent has no second account. */
@@ -26,6 +34,12 @@ export interface IntentDef {
   fromLabel: string;
   /** The tab that normally handles this intent. */
   home: ChatTabId;
+  /** Budgets and Goals set a target and do not touch the ledger. */
+  target?: boolean;
+  amountLabel?: string;
+  /** When set, the "from" field is a free-text name (the goal name), not an account. */
+  nameLabel?: string;
+  dateLabel?: string;
 }
 
 export const INTENTS: Record<IntentId, IntentDef> = {
@@ -75,7 +89,30 @@ export const INTENTS: Record<IntentId, IntentDef> = {
     hint: 'an asset is now worth a different amount. amount = the NEW total value, toAccount = the asset, fromAccount = "".',
     toKind: 'asset', toLabel: 'Asset',
     fromKind: null, fromLabel: '',
+    amountLabel: 'New value (₹)',
     home: 'assets',
+  },
+  'set-budget': {
+    id: 'set-budget',
+    label: 'Set a monthly budget',
+    hint: 'the user sets or changes a monthly spending limit. amount = the limit, toAccount = the spending category (for example Food), fromAccount = "".',
+    toKind: 'expense', toLabel: 'Spending category',
+    fromKind: null, fromLabel: '',
+    amountLabel: 'Monthly limit (₹)',
+    home: 'budgets',
+    target: true,
+  },
+  'set-goal': {
+    id: 'set-goal',
+    label: 'Set a goal',
+    hint: 'the user sets a savings or investment goal. fromAccount = the goal name, amount = the target amount, toAccount = the savings or investment account that holds the money, date = the target date words if any.',
+    toKind: 'asset', toLabel: 'Saved in (account)',
+    fromKind: null, fromLabel: '',
+    nameLabel: 'Goal name',
+    amountLabel: 'Target amount (₹)',
+    dateLabel: 'Target date (optional)',
+    home: 'goals',
+    target: true,
   },
 };
 
@@ -85,6 +122,6 @@ export const TAB_SCOPES: Record<ChatTabId, IntentId[]> = {
   daily: ['income', 'expense', 'transfer'],
   assets: ['transfer', 'revalue'],
   liabilities: ['borrow', 'repay'],
-  goals: ['transfer'],
-  budgets: [],
+  goals: ['set-goal', 'transfer'],
+  budgets: ['set-budget'],
 };
