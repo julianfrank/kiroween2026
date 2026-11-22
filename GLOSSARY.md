@@ -109,3 +109,7 @@ _Avoid_: Forecast
 **Export File**:
 The single JSON file holding all Accounts, Entries, Budgets and Goals with plain-text keys and encrypted values.
 _Avoid_: Backup, dump
+
+**Export Template**:
+The downloadable description of the Export File (rules, schemas and an example) for other tools.
+_Avoid_: Spec, sample file

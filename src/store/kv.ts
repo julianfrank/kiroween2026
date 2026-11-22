@@ -6,6 +6,8 @@ export interface KV {
   delete(key: string): Promise<void>;
   keys(): Promise<string[]>;
   clear(): Promise<void>;
+  /** Replace every item in one step: either all of ntries are stored or nothing changes. */
+  replaceAll(entries: Array<[string, string]>): Promise<void>;
 }
 
 export class MemoryKV implements KV {
@@ -24,6 +26,10 @@ export class MemoryKV implements KV {
   }
   async clear() {
     this.data.clear();
+  }
+  async replaceAll(entries: Array<[string, string]>) {
+    this.data.clear();
+    for (const [k, v] of entries) this.data.set(k, v);
   }
 }
 
@@ -67,5 +73,17 @@ export class IndexedDbKV implements KV {
   }
   async clear() {
     await wrap((await this.store('readwrite')).clear());
+  }
+  async replaceAll(entries: Array<[string, string]>) {
+    const db = await this.dbPromise;
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const s = tx.objectStore(STORE);
+      s.clear();
+      for (const [k, v] of entries) s.put(v, k);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error ?? new Error('The change was cancelled.'));
+    });
   }
 }

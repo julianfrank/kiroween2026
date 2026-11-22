@@ -40,6 +40,12 @@ export class AiHost {
     old?.destroy();
   }
 
+  /** Start over with a brand-new session (after an import), so nothing from before can be recalled. */
+  async renew() {
+    this.destroy();
+    this.session = await this.create();
+  }
+
   /** Lock, tab close and import all end here. After this, prompt() throws. */
   destroy() {
     this.session?.destroy();

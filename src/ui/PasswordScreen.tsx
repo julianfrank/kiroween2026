@@ -2,8 +2,20 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { delayAfterFailures } from '../crypto/attempts';
 import { WrongPasswordError, createVault, hasVault, unlockVault, type Vault } from '../store/vault';
 import type { KV } from '../store/kv';
+import type { LoadedData } from '../store/repo';
+import { ImportForm } from './DataPanel';
 
-export function PasswordScreen({ kv, onUnlocked }: { kv: KV; onUnlocked: (v: Vault) => void }) {
+export function PasswordScreen({
+  kv,
+  onUnlocked,
+  onBeforeReplace,
+  onImported,
+}: {
+  kv: KV;
+  onUnlocked: (v: Vault) => void;
+  onBeforeReplace?: () => void;
+  onImported?: (v: Vault, d: LoadedData) => void;
+}) {
   const [exists, setExists] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -96,6 +108,12 @@ export function PasswordScreen({ kv, onUnlocked }: { kv: KV; onUnlocked: (v: Vau
         </button>
       </form>
       {message && <p role="alert">{message}</p>}
+      {onImported && (
+        <details style={{ marginTop: 24 }}>
+          <summary>{exists ? 'Or replace everything here with an export file' : 'Or start from an export file'}</summary>
+          <ImportForm kv={kv} replacing={!!exists} onBeforeReplace={onBeforeReplace ?? (() => {})} onImported={onImported} />
+        </details>
+      )}
     </main>
   );
 }

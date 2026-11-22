@@ -48,6 +48,23 @@ export class Vault {
     return (await this.kv.keys()).filter((k) => !k.startsWith('meta:'));
   }
 
+  /** Data items exactly as stored (still encrypted). */
+  async rawItems(): Promise<Array<[string, string]>> {
+    const out: Array<[string, string]> = [];
+    for (const k of await this.keys()) {
+      const v = await this.kv.get(k);
+      if (v !== undefined) out.push([k, v]);
+    }
+    return out;
+  }
+
+  /** Data items decrypted to their JSON text. Never log the result. */
+  async plaintextItems(): Promise<Array<[string, string]>> {
+    const out: Array<[string, string]> = [];
+    for (const [k, v] of await this.rawItems()) out.push([k, await decryptValue(this.key, v)]);
+    return out;
+  }
+
   /** Remove every data item, keeping the meta keys (used before a fresh setup and by import). */
   async clearData(): Promise<void> {
     for (const k of await this.keys()) await this.kv.delete(k);
@@ -100,5 +117,49 @@ export async function unlockVault(kv: KV, password: string): Promise<Vault> {
     throw new WrongPasswordError();
   }
   if (text !== VERIFIER_TEXT) throw new WrongPasswordError();
+  return new Vault(kv, key);
+}
+
+export interface StoreMeta {
+  salt: string;
+  iterations: number;
+  verifier: string;
+}
+
+export async function readMeta(kv: KV): Promise<StoreMeta> {
+  const [salt, iterations, verifier] = await Promise.all([kv.get(META_SALT), kv.get(META_ITERATIONS), kv.get(META_VERIFIER)]);
+  if (!salt || !iterations || !verifier) throw new Error('Store is missing its metadata');
+  return { salt, iterations: Number(iterations), verifier };
+}
+
+/** The meta keys of a store, in the order they are written. */
+export function metaEntries(meta: StoreMeta): Array<[string, string]> {
+  return [
+    [META_SALT, meta.salt],
+    [META_ITERATIONS, String(meta.iterations)],
+    [META_VERSION, STORE_VERSION],
+    [META_VERIFIER, meta.verifier],
+  ];
+}
+
+/**
+ * Change the session password. The current password is checked first (WrongPasswordError otherwise).
+ * Every value is re-encrypted under a new salt and key, and the store is replaced in one step, so a
+ * failure part-way leaves the old store intact.
+ */
+export async function changePassword(
+  kv: KV,
+  currentPassword: string,
+  newPassword: string,
+  iterations = DEFAULT_ITERATIONS,
+): Promise<Vault> {
+  if (newPassword.length === 0) throw new Error('Choose a new password.');
+  const current = await unlockVault(kv, currentPassword);
+  const plain = await current.plaintextItems();
+  const salt = randomSalt();
+  const key = await deriveKey(newPassword, salt, iterations);
+  const entries = metaEntries({ salt: toBase64(salt), iterations, verifier: await encryptValue(key, VERIFIER_TEXT) });
+  for (const [k, text] of plain) entries.push([k, await encryptValue(key, text)]);
+  await kv.replaceAll(entries);
   return new Vault(kv, key);
 }

@@ -20,6 +20,11 @@ export function monthRange(iso: string): { from: string; to: string } {
   return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(last).padStart(2, '0')}` };
 }
 
+/** A moment as an IST timestamp, for example "2026-11-22T15:30:00+05:30". */
+export function istTimestamp(now: Date = new Date()): string {
+  return new Date(now.getTime() + 330 * 60_000).toISOString().slice(0, 19) + '+05:30';
+}
+
 /** Today's date in IST, as YYYY-MM-DD, regardless of the computer's time zone. */
 export function todayIso(now: Date = new Date()): string {
   return istParts.format(now); // en-CA formats as YYYY-MM-DD

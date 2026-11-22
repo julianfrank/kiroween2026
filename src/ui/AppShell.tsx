@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import type { PromptHost } from '../chat/proposal';
 import { CHAT_TABS, TAB_LABELS, type ChatTabId } from '../chat/intents';
 import { todayIso } from '../dates/dates';
@@ -22,15 +22,19 @@ export function AppShell({
   vault,
   host,
   onChanged,
+  dataPanel,
 }: {
   data: LoadedData;
   vault: Vault;
   host: PromptHost;
   onChanged: () => void;
+  /** Export, import and password change, shown from the header. */
+  dataPanel?: ReactNode;
 }) {
   const [tab, setTab] = useState<TabId>('dashboard');
   const [incoming, setIncoming] = useState<Partial<Record<ChatTabId, Incoming>>>({});
   const [event, setEvent] = useState<EntryEvent | null>(null);
+  const [showData, setShowData] = useState(false);
   const clearEvent = useCallback(() => setEvent(null), []);
   const onEntry = (e: Entry) => {
     const ev = eventFromEntry(e, data.accounts);
@@ -70,7 +74,13 @@ export function AppShell({
         <span className="state-chip" role="status" data-state={state}>
           {STATE_TEXT[state].title}: {STATE_TEXT[state].line}
         </span>
+        {dataPanel && (
+          <button aria-expanded={showData} onClick={() => setShowData((s) => !s)} style={{ marginLeft: 'auto' }}>
+            Data and password
+          </button>
+        )}
       </header>
+      {dataPanel && showData && dataPanel}
       <nav aria-label="Main tabs" style={{ margin: '12px 0' }}>
         {ORDER.map((t) => (
           <button
