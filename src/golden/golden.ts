@@ -97,6 +97,8 @@ export interface CaseResult {
   pass: boolean;
   /** Field -> [expected, got] for every field that was scored. */
   fields: Partial<Record<Field, { ok: boolean; expected: string; got: string }>>;
+  /** What the model replied, word for word (for diagnosing failures). */
+  reply?: string;
 }
 
 export interface GoldenReport {
@@ -161,7 +163,8 @@ export function scoreCase(c: GoldenCase, outcome: Outcome, accounts: ReadonlyMap
       if (e.to !== undefined) put('to', sameName(e.to, got.to), e.to, got.to || '(none)');
     }
   }
-  return { case: c, pass: Object.values(fields).every((f) => f!.ok), fields };
+  const reply = 'reply' in outcome ? outcome.reply : undefined;
+  return { case: c, pass: Object.values(fields).every((f) => f!.ok), fields, reply };
 }
 
 /** Run every golden sentence through the same pipeline the chat uses. Nothing is saved. */
@@ -209,6 +212,7 @@ export function formatReport(r: GoldenReport, chromeVersion = ''): string {
   for (const f of failed) {
     lines.push(`- [${f.case.tab}] "${f.case.message}"`);
     for (const [name, v] of Object.entries(f.fields)) if (!v!.ok) lines.push(`    ${name}: expected ${v!.expected}, got ${v!.got}`);
+    if (f.reply) lines.push(`    model said: ${f.reply.replace(/\s+/g, ' ').slice(0, 300)}`);
   }
   return lines.join('\n');
 }

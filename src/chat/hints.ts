@@ -82,6 +82,17 @@ export function refineNames(
   let from = fromName.trim();
   let to = toName.trim();
 
+  // An existing account on the wrong side, with the right side blank, is moved across. The real model put
+  // "HDFC Bank" as the income's source and left the receiving account empty (golden run 2, Chrome 157).
+  const kindOf = (n: string) => [...accounts.values()].find((a) => norm(a.name) === norm(n))?.kind;
+  if (from && !to && def.fromKind && kindOf(from) !== def.fromKind && kindOf(from) === def.toKind) {
+    to = from;
+    from = '';
+  } else if (to && !from && def.fromKind && kindOf(to) !== def.toKind && kindOf(to) === def.fromKind) {
+    from = to;
+    to = '';
+  }
+
   if (intent === 'expense' || intent === 'set-budget') {
     const category = categoryFromText(message, accounts);
     const generic = norm(to) === norm('Other Expense');

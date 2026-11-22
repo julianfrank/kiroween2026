@@ -44,6 +44,7 @@ describe('golden sentences', () => {
     expect(text).toContain('Failures:');
     expect(text).toContain('[liabilities] "I\'ve taken a Loan of Rs.5000 from Tom"');
     expect(text).toContain('intent: expected borrow, got');
+    expect(text).toContain('model said: {"intent":"expense"'); // the exact reply, for diagnosing
     // The app reads amounts from the message, so even this model gets most amounts right.
     expect(report.byField.amount[0]).toBeGreaterThan(report.byField.amount[1] / 2);
   });

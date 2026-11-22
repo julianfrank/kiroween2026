@@ -91,9 +91,9 @@ export function buildPrompt(args: {
 }
 
 export type Outcome =
-  | { type: 'confirm'; draft: EntryDraft; resolved: AnyResolved }
-  | { type: 'needs-input'; draft: EntryDraft; problems: Problem[] }
-  | { type: 'redirect'; tab: ChatTabId; draft: EntryDraft }
+  | { type: 'confirm'; draft: EntryDraft; resolved: AnyResolved; reply?: string }
+  | { type: 'needs-input'; draft: EntryDraft; problems: Problem[]; reply?: string }
+  | { type: 'redirect'; tab: ChatTabId; draft: EntryDraft; reply?: string }
   | { type: 'error'; message: string };
 
 export interface ProposeArgs {
@@ -131,11 +131,14 @@ export async function proposeEntry(host: PromptHost, args: ProposeArgs): Promise
   const base = buildPrompt(args);
   let extra = '';
   let lastError = 'no usable reply';
+  /** The model's last reply, kept so the AI check can report exactly what it said. */
+  let reply = '';
 
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: string;
     try {
       raw = await host.prompt(base + extra, { responseConstraint: PROPOSAL_SCHEMA });
+      reply = raw;
     } catch (e) {
       return { type: 'error', message: e instanceof Error ? e.message : String(e) };
     }
@@ -153,6 +156,7 @@ export async function proposeEntry(host: PromptHost, args: ProposeArgs): Promise
         type: 'needs-input',
         draft: { ...blankDraft(args.message), source: 'manual-form' },
         problems: [{ code: 'intent', message: 'I could not tell what to record. Pick the kind of entry and fill in the details.' }],
+        reply,
       };
     }
     const draft = draftFrom(p, args.message, args.accounts);
@@ -168,15 +172,16 @@ export async function proposeEntry(host: PromptHost, args: ProposeArgs): Promise
     }
 
     if (!TAB_SCOPES[args.tab].includes(p.intent)) {
-      return { type: 'redirect', tab: INTENTS[p.intent].home, draft };
+      return { type: 'redirect', tab: INTENTS[p.intent].home, draft, reply };
     }
-    if (r.ok) return { type: 'confirm', draft, resolved: r };
-    return { type: 'needs-input', draft: { ...draft, source: 'manual-form' }, problems: r.problems };
+    if (r.ok) return { type: 'confirm', draft, resolved: r, reply };
+    return { type: 'needs-input', draft: { ...draft, source: 'manual-form' }, problems: r.problems, reply };
   }
 
   return {
     type: 'needs-input',
     draft: blankDraft(args.message),
     problems: [{ code: 'intent', message: `I could not read the AI's answer (${lastError}). Fill in the details below.` }],
+    reply,
   };
 }
