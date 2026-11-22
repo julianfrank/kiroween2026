@@ -54,6 +54,7 @@ async function setUp(page: Page) {
   await expect(page.locator('.crypt-scene .flyer')).toHaveCount(5);
   const header = page.getByRole('banner', { name: 'About this app' });
   await expect(header).toBeVisible();
+  await expect(header.getByText('Scary Money Manager')).toBeVisible(); // books not open yet
   await expect(header).toHaveCSS('position', 'fixed');
   await expect(header.getByRole('link', { name: /Made with Kiro/ })).toHaveAttribute('href', 'https://kiro.dev');
   await expect(header.getByText(/^v\d+\.\d+\.\d+/)).toBeVisible();
@@ -95,7 +96,9 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
 
   await setUp(page);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await expect(page.getByRole('banner', { name: 'About this app' })).toBeVisible(); // the header stays on the main app too
+  const banner = page.getByRole('banner', { name: 'About this app' });
+  await expect(banner).toBeVisible(); // the header stays on the main app too
+  await expect(banner.getByText('My Money Manager')).toBeVisible(); // net worth is positive
 
   // A chat entry: proposed, confirmed, saved, animated, listed with an IST DD/MMM/YYYY date.
   await say(page, 'Daily Updates', 'Paid Rs.800 for groceries yesterday');
@@ -110,6 +113,8 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   await say(page, 'Daily Updates', 'Paid 50000 for rent');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(page.getByText(/Lights out/)).toBeVisible();
+  await expect(banner.getByText('Scary Money Manager')).toBeVisible(); // net worth went below zero
+  await expect(page).toHaveTitle('Scary Money Manager');
 
   // The dashboard shows the Actual Sankey for this month.
   await page.getByRole('navigation', { name: 'Main tabs' }).getByRole('button', { name: 'Dashboard' }).click();

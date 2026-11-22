@@ -1,5 +1,6 @@
 import { KiroGhost } from '../theme/Crypt';
 import '../theme/header.css';
+import { useAppTitle } from './title';
 
 export const APP_VERSION = __APP_VERSION__;
 export const AUTHOR = 'Julian Frank';
@@ -23,13 +24,14 @@ function GitHubMark() {
  * net-worth theme is, so it reads as the frame around the whole app.
  */
 export function SiteHeader() {
+  const title = useAppTitle();
   return (
     <header className="site-header" aria-label="About this app">
       <div className="site-header-inner">
         <span className="site-header-ghost" aria-hidden="true">
           <KiroGhost size={30} mood="happy" />
         </span>
-        <span className="site-title">Scary Money Manager</span>
+        <span className="site-title" aria-live="polite">{title}</span>
         <span className="site-version" title="Build version from package.json">
           v{APP_VERSION}
         </span>

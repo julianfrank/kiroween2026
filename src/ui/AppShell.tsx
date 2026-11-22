@@ -8,6 +8,7 @@ import { Ambient, Ghost, Pumpkin } from '../theme/Decor';
 import { EntryAnimation } from '../theme/EntryAnimation';
 import { eventFromEntry, type EntryEvent } from '../theme/events';
 import { netWorthState, STATE_TEXT, useTheme } from '../theme/theme';
+import { appTitle } from './title';
 import type { Vault } from '../store/vault';
 import { ChatPanel, type Incoming } from './ChatPanel';
 import { Dashboard } from './Dashboard';
@@ -69,7 +70,7 @@ export function AppShell({
     <main style={{ padding: 24, maxWidth: 960, margin: '0 auto' }}>
       <header className="app-header">
         {state === 'light' ? <Pumpkin /> : <Ghost />}
-        <h1 className="visually-hidden">Scary Money Manager</h1>
+        <h1 className="visually-hidden">{appTitle(assets - liabilities)}</h1>
         <span className="state-chip" role="status" data-state={state}>
           {STATE_TEXT[state].title}: {STATE_TEXT[state].line}
         </span>

@@ -67,3 +67,7 @@ Multi-currency, live exchange rates, weekly/quarterly budgets, budget carry-over
 - "Data and password" is the last main tab (after Daily Updates). It holds export, the Export Template, import, password change, the AI check and Start over.
 - **Start over** deletes everything in the browser (accounts, entries, budgets, goals and the password check) after the user types `DELETE`. The AI session is destroyed first. The app returns to "Choose a password" and then Setup.
 - The password screen has one password field (more than six characters, so at least 7). Once it is long enough it offers **Unlock** (when a database exists), **Upload new file** (an export encrypted with this password; replaces the database after a warning) and **Start New Database** (asks for the password again, warns, deletes any existing database, then starts Setup). The 7-character minimum also applies to a password change and to an export file password. Wrong passwords on Unlock and Upload wait 1s, 2s, 4s and so on.
+
+## 14. Header and title (added after Task 12)
+- A fixed floating header on every screen shows the title, the build version from package.json, "by Julian Frank", the GitHub repo link and "Made with Kiro" (kiro.dev).
+- The title is **My Money Manager** while net worth is above zero, and **Scary Money Manager** at zero or below and on the entry screens. The browser tab title follows it.

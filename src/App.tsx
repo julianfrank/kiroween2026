@@ -15,6 +15,8 @@ import { PasswordScreen } from './ui/PasswordScreen';
 import { Readiness } from './ui/Readiness';
 import { SetupScreen } from './ui/SetupScreen';
 import { EntryStage } from './theme/Crypt';
+import { todayIso } from './dates/dates';
+import { appTitle, setAppTitle } from './ui/title';
 
 const lm: LanguageModelLike | undefined =
   'LanguageModel' in globalThis ? (LanguageModel as unknown as LanguageModelLike) : undefined;
@@ -74,6 +76,11 @@ export function App() {
     setEpoch((e) => e + 1);
     void host.renew().catch(() => setState({ step: 'error', message: 'The AI could not restart.' }));
   };
+
+  // The title turns friendly while net worth is above zero; before the books are open it stays scary.
+  const inMainApp = state.step === 'ready' && vault !== null && data !== null && data.accounts.size > 0;
+  const title = appTitle(inMainApp ? data!.ledger.netWorth(todayIso()) : null);
+  useEffect(() => setAppTitle(title), [title]);
 
   if (state.step !== 'ready') {
     return (
