@@ -41,7 +41,19 @@ You can add up to 25 tags.
 4) Sponsor / Special Prizes
 5)  Category
 Select one — Appears in project gallery
-6) 
+6) Testing instructions or credentials the judges need to test your project, if any.
+These will not be shown to the public, only to Devpost managers and Hackathon Judges
+7) Explain how your project meets the main technology requirement.
+Your project must use Kiro. Name each product you used and what it does in your project (Kiro tools, custom agents, hooks, specs, steering, MCP, PBT, powers).
+8) Disclose any pre-existing code or work you used (beyond standard frameworks, libraries, and starter templates)
+Only NEW Projects are allowed but you must disclose any boiler plates, starter kits, etc;
+9) Which Bonus Prizes are you entering?
+You can win any number of Bonus Prizes
+10) If entering Startup Bonus Prize, confirm that you are a founder of the startup, and include your LinkedIn profile and startup website all items are required to qualify for this Bonus Prize
+11) If entering the Social Blitz Bonus Prize, provide the URL to your post. It must start with #KiroweenHackathon26.
+12) If entering the Bonus Blog Prize, provide the URL to your public blog post on any platform. Blog must be about Kiro and published during the submission period.
+13) 
+
 
 These are the highlights, but review the full details carefully on the Rules tab!
 
