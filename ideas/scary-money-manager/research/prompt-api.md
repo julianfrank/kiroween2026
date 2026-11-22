@@ -27,4 +27,9 @@ Built file size with React 19 only (no d3 yet): 430,854 bytes.
 - The current docs use `session.contextUsage` and `session.contextWindow`. Older Chrome builds used `inputUsage` and `inputQuota`. `AiHost` reads either, rebuilds at 80%, and also recovers once from `QuotaExceededError`.
 
 ## Golden-sentence accuracy (Task 12)
-- Not yet measured. Run "Data and password" > "Check the AI" in Chrome with the real model and record the report here (date, Chrome version, score, repeated failures).
+- **Run 1 (22/Nov/2026, Chrome 157, Gemini Nano on the user's Windows laptop): 31 of 36 passed (86%).** Intent 32/32, amount 30/30, date 25/25, tab redirect 4/4, from 13/15, to 25/28. Every failure was an account name:
+  - "Spent 1200 on petrol from cash": the model invented "Petrol" instead of Transport.
+  - "Dinner at a restaurant 1,800 from cash on 20/Nov/2026": "Other Expense" instead of Food.
+  - "Freelance payment of 1.2L received in HDFC Bank on 15 Nov": blank receiving account.
+  - "I've taken a Loan of Rs.5000 from Tom" and "Borrowed 20k from Tom into HDFC Bank yesterday": blank lender.
+- **Fix:** `src/chat/hints.ts` (`refineNames`) repairs the model's names from the user's own words: everyday words map to the existing spending categories, a blank account is filled from the account the message names (whole words only), and a new lender becomes "Loan - Name". `src/chat/hints.test.ts` replays the five real replies; all now pass. Expected score on a re-run: 36 of 36, if the model gives the same replies. Re-run "Check the AI" to confirm and record run 2 here.

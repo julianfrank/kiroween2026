@@ -44,6 +44,7 @@ React 19 + TypeScript + Vite, bundled into a single file with vite-plugin-single
 
 ## Challenges
 - **The model can't be trusted with numbers.** It turned "30L" into 3 crore, and invented ₹100 crore for a sentence with no number. Now the app reads every amount from your own words; the model only picks which account and which kind of entry.
+- **Testing a browser AI you can't run in CI.** A 36-sentence golden set runs inside the app against the real model. The first run scored 31 of 36 (86%): intents, amounts and dates were all right, and every miss was an account name ("Petrol" instead of Transport, a blank "HDFC Bank"). The fix was again to let the app read the user's own words, and each real reply is now a regression test.
 - **A home loan booked as an asset** made an account go to −₹100 crore. New rules: accounts are only created where they can grow naturally, and anything named like a loan must be a liability.
 - **Does the Prompt API work from `file://`?** Undocumented, so the first task was a spike. It does.
 - **IST everywhere.** "Today" is the IST date whatever the computer's time zone; tests run the browser in New York to prove it.
@@ -106,6 +107,7 @@ Write only what is true. This is what was used to build the project:
   - `design-taste-frontend`: motion rules for the entry screens.
 - **Steering:** `AGENTS.md` is loaded into every Kiro session as a workspace rule. It holds the status, the decisions Kiro must not change without asking, the rules learned from bugs ("never trust the model with amounts"), and the working rules.
 - **Spec-driven development:** requirements (Q1–Q28) → design → 12 ordered tasks, each with named tests and a demo. Kiro implemented one task at a time and updated the plan and `AGENTS.md` after each.
+- **Measuring the real model:** a golden set of 36 sentences runs in the app ("Check the AI"). The first run scored 31 of 36 (86%). Kiro turned each of the five failures into a regression test using the model's exact reply, then fixed the app to repair account names from the user's words.
 - **Kiro tools:** web search and web fetch (Prompt API docs, current GitHub Actions versions), the shell (builds, Vitest, Playwright in real Chrome), and screenshots it read back to review its own UI.
 
 - **`/.kiro` folder (in the repo):**

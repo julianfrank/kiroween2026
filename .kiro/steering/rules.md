@@ -23,6 +23,7 @@ inclusion: always
 ## Rules learned from real bugs
 - **Never trust the model with amounts.** `src/chat/amounts.ts` reads them from the user's message; the model only picks between numbers the user wrote. A message with no number leaves the amount blank. (The model turned "30L" into 3 crore, and invented 100 crore for a sentence with no number.)
 - **Account rules** (`newAccountProblem` and `looksLikeLoan` in `src/chat/draft.ts`): a new account may only be created where it grows naturally (an asset or expense that receives money, a liability or income source that gives it). Money cannot leave an account that does not exist; a repayment cannot go to a loan that does not exist. Anything named like a loan, mortgage, EMI, overdraft or credit card must be a liability.
+- **Repair the model's account names from the user's words** (`refineNames` in `src/chat/hints.ts`): the real model invented categories ("Petrol"), used "Other Expense" for a dinner, and left named accounts blank ("into HDFC Bank", "from Tom"). Only the model's answer is repaired; what the user types on the Confirm Card is kept.
 
 ## Working rules
 - Follow the spec in `.kiro/specs/scary-money-manager/`; update `tasks.md` and the Status in `AGENTS.md` after every task.
