@@ -52,7 +52,7 @@ You can win any number of Bonus Prizes
 10) If entering Startup Bonus Prize, confirm that you are a founder of the startup, and include your LinkedIn profile and startup website all items are required to qualify for this Bonus Prize
 11) If entering the Social Blitz Bonus Prize, provide the URL to your post. It must start with #KiroweenHackathon26.
 12) If entering the Bonus Blog Prize, provide the URL to your public blog post on any platform. Blog must be about Kiro and published during the submission period.
-13) 
+
 
 
 These are the highlights, but review the full details carefully on the Rules tab!
