@@ -54,7 +54,7 @@ export function SankeyChart({ data, title }: { data: SankeyData; title: string }
           const t = l.target as unknown as { name: string; kind: NodeKind };
           const color = KIND_COLOR[s.kind === 'hub' ? t.kind : s.kind];
           return (
-            <path key={i} className="flow-link" d={path(l) ?? ''} style={{ stroke: color }} strokeOpacity={0.4} strokeWidth={Math.max(1, l.width ?? 1)}>
+            <path key={i} className="flow-link" d={path(l) ?? ''} style={{ stroke: color }} strokeWidth={Math.max(1, l.width ?? 1)}>
               <title>{`${s.name} → ${t.name}: ${formatRupees(l.value)}`}</title>
             </path>
           );

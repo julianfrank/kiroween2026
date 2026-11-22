@@ -23,7 +23,7 @@ async function store(password: string, name: string) {
 }
 
 function screenFor(kv: MemoryKV) {
-  const props = { onUnlocked: vi.fn(), onBeforeReplace: vi.fn(), onImported: vi.fn(), onStartNew: vi.fn(async () => {}) };
+  const props = { onUnlocked: vi.fn(), onBeforeReplace: vi.fn(), onImported: vi.fn(), onStartNew: vi.fn(async () => {}), onSample: vi.fn(async () => {}) };
   render(<PasswordScreen kv={kv} {...props} />);
   return props;
 }
@@ -125,5 +125,22 @@ describe('password screen', () => {
     fireEvent.click(btn('Replace with this file')!);
     await waitFor(() => expect(p.onImported).toHaveBeenCalledOnce());
     expect(p.onBeforeReplace).toHaveBeenCalledOnce();
+  });
+});
+
+describe('samples on the password screen', () => {
+  it('offers both samples with the typed password, and warns when a database will be deleted', async () => {
+    const s = await store('secret-pw', 'Cash');
+    const p = screenFor(s.kv);
+    await screen.findByText('A database is stored in this browser.');
+    type('Password', 'sixsix');
+    expect(btn('Try a sample')).toBeNull();
+    type('Password', 'demo-password');
+    fireEvent.click(btn('Try a sample')!);
+    expect(screen.getByText(/deletes/)).toBeTruthy();
+    fireEvent.click(btn('Sample that ends below zero')!);
+    await waitFor(() => expect(p.onSample).toHaveBeenCalledWith('demo-password', 'negative'));
+    fireEvent.click(btn('Sample that ends above zero')!);
+    await waitFor(() => expect(p.onSample).toHaveBeenCalledWith('demo-password', 'positive'));
   });
 });

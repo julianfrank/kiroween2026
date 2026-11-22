@@ -188,6 +188,37 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   await context.close();
 });
 
+test('both samples open straight into a full set of books', async ({ browser }) => {
+  for (const [label, theme, title] of [
+    ['Sample that ends below zero', 'dark', 'Scary Money Manager'],
+    ['Sample that ends above zero', 'light', 'My Money Manager'],
+  ] as const) {
+    const context = await browser.newContext();
+    await fakeAi(context);
+    const page = await context.newPage();
+    await page.goto(FILE);
+    await page.getByPlaceholder('Password', { exact: true }).fill('sample-password');
+    await page.getByRole('button', { name: 'Try a sample' }).click();
+    await page.getByRole('button', { name: label }).click();
+    await expect(page.getByRole('navigation', { name: 'Main tabs' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    await expect(page.getByRole('banner', { name: 'About this app' }).getByText(title)).toBeVisible();
+    await expect(page.getByRole('img', { name: /^Actual Sankey, total/ })).toBeVisible();
+    const tab = (name: string) => page.getByRole('navigation', { name: 'Main tabs' }).getByRole('button', { name });
+    await tab('Daily Updates').click();
+    await expect(page.getByRole('list', { name: 'Entries' }).getByRole('listitem')).toHaveCount(32); // 7 opening + 25
+    await tab('Budgets').click();
+    await expect(page.getByRole('list', { name: 'Budgets' }).getByRole('listitem').first()).toBeVisible();
+    await tab('Goals').click();
+    await expect(page.getByRole('list', { name: 'Goals' }).getByRole('listitem').first()).toBeVisible();
+    await page.reload();
+    await page.getByPlaceholder('Password', { exact: true }).fill('sample-password');
+    await page.getByRole('button', { name: 'Unlock' }).click();
+    await expect(page.getByRole('navigation', { name: 'Main tabs' })).toBeVisible();
+    await context.close();
+  }
+});
+
 test('a browser without the Prompt API gets a clear message', async ({ browser }) => {
   const context = await browser.newContext();
   await context.addInitScript(() => {

@@ -33,6 +33,15 @@ export async function saveSetup(
   for (const a of accounts.values()) await putAccount(vault, a);
 }
 
+/** Replace all data with a complete set of books (used for the sample datasets). Accounts go last, as above. */
+export async function saveAll(vault: Vault, data: LoadedData): Promise<void> {
+  await vault.clearData();
+  for (const [key, entry] of data.ledger.entries) await vault.putJson(key, entry);
+  for (const [key, b] of data.budgets) await vault.putJson(key, b);
+  for (const [key, g] of data.goals) await vault.putJson(key, g);
+  for (const a of data.accounts.values()) await putAccount(vault, a);
+}
+
 /**
  * Save one confirmed entry (and any new accounts) encrypted, then add it to the in-memory ledger.
  * The ledger is only changed after the save succeeded, and new accounts are rolled back on failure.

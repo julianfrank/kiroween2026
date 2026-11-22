@@ -73,5 +73,14 @@ const settle = (p) => p.waitForTimeout(1600);
   await settle(p);
   await p.screenshot({ path: `${OUT}/5-password-phone.png` });
 }
+for (const [label, name] of [['Sample that ends below zero', '7-sample-negative'], ['Sample that ends above zero', '8-sample-positive']]) {
+  const p = await page('ready');
+  await p.getByLabel('Password').fill('sample-password');
+  await p.getByRole('button', { name: 'Try a sample' }).click();
+  await p.getByRole('button', { name: label }).click();
+  await p.getByRole('navigation', { name: 'Main tabs' }).waitFor();
+  await settle(p);
+  await p.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
+}
 await browser.close();
 console.log(`Saved to ${OUT}`);

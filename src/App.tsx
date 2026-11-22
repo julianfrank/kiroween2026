@@ -7,7 +7,8 @@ import {
   type ReadinessState,
 } from './ai/readiness';
 import { IndexedDbKV } from './store/kv';
-import { emptyTargets, loadAll, saveSetup, type LoadedData } from './store/repo';
+import { emptyTargets, loadAll, saveAll, saveSetup, type LoadedData } from './store/repo';
+import { buildSample, type SampleKind } from './sample/sample';
 import { createVault, nukeStore, type Vault } from './store/vault';
 import { AppShell } from './ui/AppShell';
 import { DataPanel } from './ui/DataPanel';
@@ -77,6 +78,19 @@ export function App() {
     void host.renew().catch(() => setState({ step: 'error', message: 'The AI could not restart.' }));
   };
 
+  // Try a sample: like Start New Database, then fill the new store with a sample set of books.
+  const onSample = async (password: string, kind: SampleKind) => {
+    const sample = buildSample(kind, todayIso());
+    host.destroy();
+    await nukeStore(kv);
+    const v = await createVault(kv, password);
+    await saveAll(v, sample);
+    setData(sample);
+    setVault(v);
+    setEpoch((e) => e + 1);
+    void host.renew().catch(() => setState({ step: 'error', message: 'The AI could not restart.' }));
+  };
+
   // The title turns friendly while net worth is above zero; before the books are open it stays scary.
   const inMainApp = state.step === 'ready' && vault !== null && data !== null && data.accounts.size > 0;
   const title = appTitle(inMainApp ? data!.ledger.netWorth(todayIso()) : null);
@@ -92,7 +106,7 @@ export function App() {
   if (!vault) {
     return (
       <EntryStage>
-        <PasswordScreen kv={kv} onUnlocked={setVault} onBeforeReplace={onBeforeReplace} onImported={onImported} onStartNew={onStartNew} />
+        <PasswordScreen kv={kv} onUnlocked={setVault} onBeforeReplace={onBeforeReplace} onImported={onImported} onStartNew={onStartNew} onSample={onSample} />
       </EntryStage>
     );
   }

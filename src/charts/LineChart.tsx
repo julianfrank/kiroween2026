@@ -40,7 +40,7 @@ export function LineChart({ data, title }: { data: TrendData; title: string }) {
         ))}
         {data.labels.map((l, i) =>
           i % 2 === (data.labels.length - 1) % 2 ? (
-            <text key={l} x={x(l)} y={H - 8} textAnchor="middle" fontSize={10} fill="currentColor">
+            <text key={l} x={x(l)} y={H - 8} textAnchor={i === data.labels.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'} fontSize={10} fill="currentColor">
               {l}
             </text>
           ) : null,

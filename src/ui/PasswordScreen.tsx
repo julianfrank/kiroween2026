@@ -8,8 +8,9 @@ import type { KV } from '../store/kv';
 import type { LoadedData } from '../store/repo';
 import { WrongPasswordError, hasVault, unlockVault, type Vault } from '../store/vault';
 import { KiroGhost } from '../theme/Crypt';
+import { SAMPLE_LABELS, type SampleKind } from '../sample/sample';
 
-type Panel = 'none' | 'upload' | 'new';
+type Panel = 'none' | 'upload' | 'new' | 'sample';
 
 /**
  * One password field for every way in. Once the password is long enough the user can:
@@ -23,6 +24,7 @@ export function PasswordScreen({
   onBeforeReplace,
   onImported,
   onStartNew,
+  onSample,
 }: {
   kv: KV;
   onUnlocked: (v: Vault) => void;
@@ -30,6 +32,8 @@ export function PasswordScreen({
   onImported: (v: Vault, d: LoadedData) => void;
   /** Deletes any existing database, then creates an empty one with this password. */
   onStartNew: (password: string) => Promise<void>;
+  /** Deletes any existing database, then creates one with this password filled with a sample set of books. */
+  onSample?: (password: string, kind: SampleKind) => Promise<void>;
 }) {
   const [exists, setExists] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
@@ -102,6 +106,8 @@ export function PasswordScreen({
       await onStartNew(password);
     });
 
+  const sample = (kind: SampleKind) => run(async () => onSample!(password, kind));
+
   async function pick(f: File | undefined) {
     setMessage('');
     setFile(null);
@@ -165,6 +171,11 @@ export function PasswordScreen({
             <button type="button" aria-pressed={panel === 'new'} onClick={() => { setPanel(panel === 'new' ? 'none' : 'new'); setMessage(''); }}>
               Start New Database
             </button>
+            {onSample && (
+              <button type="button" aria-pressed={panel === 'sample'} onClick={() => { setPanel(panel === 'sample' ? 'none' : 'sample'); setMessage(''); }}>
+                Try a sample
+              </button>
+            )}
           </div>
         )}
       </form>
@@ -210,6 +221,27 @@ export function PasswordScreen({
           <button disabled={blocked || repeat === ''} onClick={() => void startNew()}>
             {busy ? 'Creating…' : exists ? 'Delete and start new' : 'Create new database'}
           </button>
+        </section>
+      )}
+
+      {!tooShort && panel === 'sample' && onSample && (
+        <section aria-label="Try a sample" className="card" style={{ marginTop: 12 }}>
+          <p>
+            Start with a made-up set of books: opening balances plus 25 transactions over the last month, dated up to today,
+            with budgets and goals, so every tab has something to show. It is saved with this password like any database.
+          </p>
+          {exists && (
+            <p role="note" style={{ color: 'var(--bad)' }}>
+              This <b>deletes</b> the database in this browser first. It cannot be undone.
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {(['negative', 'positive'] as SampleKind[]).map((k) => (
+              <button key={k} disabled={blocked} onClick={() => void sample(k)}>
+                {busy ? 'Building the sample…' : SAMPLE_LABELS[k]}
+              </button>
+            ))}
+          </div>
         </section>
       )}
 

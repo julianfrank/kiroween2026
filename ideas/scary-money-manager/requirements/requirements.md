@@ -71,3 +71,6 @@ Multi-currency, live exchange rates, weekly/quarterly budgets, budget carry-over
 ## 14. Header and title (added after Task 12)
 - A fixed floating header on every screen shows the title, the build version from package.json, "by Julian Frank", the GitHub repo link and "Made with Kiro" (kiro.dev).
 - The title is **My Money Manager** while net worth is above zero, and **Scary Money Manager** at zero or below and on the entry screens. The browser tab title follows it.
+
+## 15. Sample datasets (added after Task 12)
+- The password screen offers **Try a sample** once the password is long enough: "Sample that ends below zero" and "Sample that ends above zero". Each deletes any existing database (after a warning), then creates one with the typed password holding opening balances, 25 transactions dated over the last 30 days up to today (IST), budgets and goals, so every tab has data.
