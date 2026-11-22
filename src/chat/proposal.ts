@@ -5,6 +5,7 @@ import type { Rupees } from '../money/money';
 import { blankDraft, resolveAny, type AnyResolved, type EntryDraft, type Problem } from './draft';
 import type { Budget, Goal } from '../targets/types';
 import { chooseAmountText } from './amounts';
+import { refineNames } from './hints';
 import { ALL_INTENTS, INTENTS, TAB_LABELS, TAB_SCOPES, type ChatTabId, type IntentId } from './intents';
 
 export interface PromptHost {
@@ -106,13 +107,16 @@ export interface ProposeArgs {
   makeId?: (prefix: string) => string;
 }
 
-function draftFrom(p: Proposal, message: string): EntryDraft {
+function draftFrom(p: Proposal, message: string, accounts: ReadonlyMap<string, Account>): EntryDraft {
+  const intent = p.intent === 'other' ? null : p.intent;
+  // The app repairs blank or invented account names from the user's own words (see hints.ts).
+  const names = refineNames(intent, p.fromAccount, p.toAccount, message, accounts);
   return {
-    intent: p.intent === 'other' ? null : p.intent,
+    intent,
     amountText: chooseAmountText(message, p.amount),
     dateText: p.date,
-    fromName: p.fromAccount,
-    toName: p.toAccount,
+    fromName: names.fromName,
+    toName: names.toName,
     userText: message,
     source: 'ai-confirmed',
   };
@@ -151,7 +155,7 @@ export async function proposeEntry(host: PromptHost, args: ProposeArgs): Promise
         problems: [{ code: 'intent', message: 'I could not tell what to record. Pick the kind of entry and fill in the details.' }],
       };
     }
-    const draft = draftFrom(p, args.message);
+    const draft = draftFrom(p, args.message, args.accounts);
     const r = resolveAny(draft, args);
 
     // A wrong kind of account (a loan treated as an asset, say) is the model's mistake: ask once more,
