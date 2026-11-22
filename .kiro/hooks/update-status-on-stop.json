@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Keep the status and task list current",
+      "trigger": "Stop",
+      "description": "When the agent finishes a turn, reminds it to update AGENTS.md and tasks.md, confirm the checks ran, and respect the steering rules.",
+      "action": {
+        "type": "agent",
+        "prompt": "Before you finish: if this turn changed code or behaviour, make sure the Status in AGENTS.md and .kiro/specs/scary-money-manager/tasks.md describe the change, that npm run build, npm test and npm run test:e2e were run and passed (or say which did not), and that no decision in .kiro/steering/rules.md was changed without the user's approval."
+      }
+    }
+  ]
+}

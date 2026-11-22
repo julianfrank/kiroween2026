@@ -21,11 +21,18 @@ npm run test:e2e   # browser tests in your installed Google Chrome
 
 Every push to `main` runs `.github/workflows/pages.yml`. It installs dependencies, runs the unit tests, builds `dist/index.html` and publishes it to GitHub Pages at the URL above. You can also run it by hand from the Actions tab ("Deploy to GitHub Pages", then "Run workflow").
 
+## How it was built with Kiro
+
+- Spec (requirements, design, tasks): `.kiro/specs/scary-money-manager/`
+- Steering (product, tech, structure, rules): `.kiro/steering/`
+- Agent hooks (unit tests on save, a guard against logging secrets, keeping the status current): `.kiro/hooks/`
+- Property-based tests for the money rules: `src/properties.test.ts`
+
 ## More
 
-- Instructions and status for agent sessions: `AGENTS.md`
+- Status and code map for agent sessions: `AGENTS.md`
 - Domain terms: `GLOSSARY.md`
 - Decisions: `docs/adr/`
-- Requirements, design and plan: `ideas/scary-money-manager/`
+- Design notes, research and the Kiroween submission guide: `ideas/scary-money-manager/`
 
-Author: Julian Frank. Made with [Kiro](https://kiro.dev).
+Author: Julian Frank. Made with [Kiro](https://kiro.dev). Licence: [MIT](LICENSE).

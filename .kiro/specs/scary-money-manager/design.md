@@ -1,6 +1,6 @@
 # Design: Scary Money Manager
 
-Requirements: `../requirements/requirements.md`. Terms: root `GLOSSARY.md`. Decisions: `docs/adr/`.
+Requirements: `requirements.md` (this folder). Tasks: `tasks.md`. Terms: root `GLOSSARY.md`. Decisions: `docs/adr/`. Export format: `ideas/scary-money-manager/design/export-format.md`. Entry-screen look: `ideas/scary-money-manager/design/entry-theme.md`.
 
 ## 1. Stack
 Vite, React 19, TypeScript, Vitest, d3 and d3-sankey, `vite-plugin-singlefile`. Output: `dist/index.html`. Source goes in `src/` at the repo root. No server and no network calls after the model is downloaded.
@@ -39,7 +39,7 @@ flowchart LR
 Pure logic (everything except `ui/`, d3 views, and the browser parts of `ai/` and `store/`) must have no DOM dependency so Vitest can test it.
 
 ## 4. Data model
-Stored values are JSON, encrypted per item. Shapes are in `export-format.md` (the stored shape and the exported shape are the same).
+Stored values are JSON, encrypted per item. Shapes are in `ideas/scary-money-manager/design/export-format.md` (the stored shape and the exported shape are the same).
 
 Key scheme: `acct:<id>`, `txn:<date>:<seq>`, `budget:<id>`, `goal:<id>`, `meta:verifier`, `meta:salt`, `meta:version`.
 
@@ -68,14 +68,16 @@ State: list of opening lines with `asOfDate`, plus Opening Equity. `imbalance = 
 - **Planned Sankey** for the same range: sources are Income (actual income for the range), targets are Budget limits and Goal monthly contributions (target remaining divided by months left, or target divided by 12 when no date), plus "Unallocated".
 - **Sub-tabs** (each is a pure data builder plus a d3 view): Income vs Expense vs Budget trend (12 months), Income vs Savings/Investments vs Goals trend, Net worth over time (month-end), Expense breakdown, Budget utilisation, Goal progress with projected completion (average monthly contribution), Liabilities summary.
 
-## 8. Theme and animation`n`nThe entry screens (loader, password, Setup) have their own always-dark theme, "the crypt": see `entry-theme.md`. Everything below is the main app.
+## 8. Theme and animation
+
+The entry screens (loader, password, Setup) have their own always-dark theme, "the crypt": see `ideas/scary-money-manager/design/entry-theme.md`. Everything below is the main app.
 - `netWorthState(netWorth, totalAssets)`: Twilight if `|netWorth| ≤ 0.05 × totalAssets` (a band on both sides of zero; total assets below zero count as zero), otherwise Light if `netWorth > 0` and Dark if `netWorth < 0`. Pure function, no hysteresis, recomputed on every render so it changes the moment an Entry is saved. Chart colours are CSS variables (`--c-*`) with a light and a night palette.
 - Light: white and pale grey "Office" surfaces, orange and purple accents, small pumpkin and ghost touches. Dark: near-black, orange, purple and bone-white, bats and cobwebs. Twilight: dusk gradient between the two.
 - Animations (CSS and SVG): coins flow from source Account to target Account on each confirmed Entry, a net worth counter animates, positive states show gentle fireflies, negative states show flickering lights. Always on.
 - Colour pairs must keep readable contrast for numbers in all three states.
 
 ## 9. Export and import
-See `export-format.md`. Import steps: read file, validate envelope, ask for password, derive key, decrypt `meta:verifier`, decrypt and validate every item, then on success: destroy the AI session, clear chat state, wipe the store, write the items, run the balance check. Any failure before the wipe leaves the store unchanged.
+See `ideas/scary-money-manager/design/export-format.md`. Import steps: read file, validate envelope, ask for password, derive key, decrypt `meta:verifier`, decrypt and validate every item, then on success: destroy the AI session, clear chat state, wipe the store, write the items, run the balance check. Any failure before the wipe leaves the store unchanged.
 
 ## 10. Risks
 | Risk | Mitigation |

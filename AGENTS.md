@@ -1,15 +1,19 @@
 # AGENTS.md: Scary Money Manager
 
-Instructions and status for future agent sessions. Read this first, and update the **Status** section after every task.
+Status and code map for agent sessions. Read this first, and update the **Status** section after every task. The rules (decisions you must not change, rules from real bugs, working rules) are in `.kiro/steering/rules.md`; product, tech and structure are beside it in `.kiro/steering/`.
 
 ## What this is
 A single-file HTML money manager for Chrome, built for Kiroween 2026. It uses Chrome's on-device Prompt API (Gemini Nano) to turn plain text into double-entry ledger entries. Values are encrypted with a session password. The theme follows net worth. The original brief is `ideas/.ignore/PROMPTS.md`.
 
 ## Status
-- **All 12 planned tasks are built.** Task list and per-task notes: `ideas/scary-money-manager/plan/tasks.md`.
-- **Start over** (added after Task 12): `nukeStore(kv)` clears the whole store including `meta:*`. `App.onNuke` destroys the AI session first, then clears the store, removes the theme attribute, drops the vault and data (back to "Choose a password"), and renews the AI. Offered in the Data and password tab behind typing `DELETE` (`NukeForm`).`n- **Password screen** (`ui/PasswordScreen.tsx`): one shared password field, at least 7 characters (`crypto/password.ts`, also enforced by `changePassword` and `exportWithNewPassword`). It then offers Unlock (if a store exists), Upload new file (`importExportFile` with the same password) and Start New Database (repeat password, then `App.onStartNew`: destroy AI, `nukeStore`, `createVault`, renew AI). Stores made earlier with passwords under 7 characters cannot be unlocked any more; use Start New Database.`n- **Still open (needs the user, in Chrome with the real model):** the golden-sentence accuracy run. Open the app, then the "Data and password" tab > "Check the AI" > "Run the AI check", and paste the report back. No accuracy figure has been recorded yet. Record it in `research/prompt-api.md` and fix the prompt or the app for repeated failures.
+- **All 12 planned tasks are built.** Spec (requirements, design, tasks): `.kiro/specs/scary-money-manager/`.
+- **Start over** (added after Task 12): `nukeStore(kv)` clears the whole store including `meta:*`. `App.onNuke` destroys the AI session first, then clears the store, removes the theme attribute, drops the vault and data (back to "Choose a password"), and renews the AI. Offered in the Data and password tab behind typing `DELETE` (`NukeForm`).
+- **Password screen** (`ui/PasswordScreen.tsx`): one shared password field, at least 7 characters (`crypto/password.ts`, also enforced by `changePassword` and `exportWithNewPassword`). It then offers Unlock (if a store exists), Upload new file (`importExportFile` with the same password) and Start New Database (repeat password, then `App.onStartNew`: destroy AI, `nukeStore`, `createVault`, renew AI). Stores made earlier with passwords under 7 characters cannot be unlocked any more; use Start New Database.
+- **Still open (needs the user, in Chrome with the real model):** the golden-sentence accuracy run. Open the app, then the "Data and password" tab > "Check the AI" > "Run the AI check", and paste the report back. No accuracy figure has been recorded yet. Record it in `research/prompt-api.md` and fix the prompt or the app for repeated failures.
+- **Kiroween submission:** MIT `LICENSE` at the root; `/.kiro` holds steering, the spec and hooks (`unit-tests-on-save`, `no-secret-logs` with `hooks/scripts/no-secret-logs.mjs`, `update-status-on-stop`). Never add `.kiro` to `.gitignore`. Copy-paste answers for every Devpost field: `ideas/scary-money-manager/submission/devpost-submission.md`. Category: Costume Contest. Bonus prizes: Best Demo, Social Blitz, Bonus Blog. The AI stays required (no "without AI" mode).
+- **Property tests:** `src/properties.test.ts` (fast-check): entries balance and move net worth correctly, reversals cancel, rupees round-trip and paise are refused, amounts are read from sentences in every written form, the setup gate, Net Worth State boundaries, IST "today", and export then import (wrong password changes nothing).
 - **Deployment:** `.github/workflows/pages.yml` runs on every push to `main` (and by hand): `npm ci`, `npm test`, `npm run build`, then publishes `dist/` to GitHub Pages at https://julianfrank.github.io/kiroween2026/ (also in `README.md`). The repo's Pages source must be set to "GitHub Actions".
-- **Checks:** `npm run build` (typecheck and single-file build, about 384 KB), `npm test` (Vitest, 202 tests including a build check), `npm run test:e2e` (build, then Playwright in the installed Google Chrome, headless, opening `dist/index.html` from disk with a fake Prompt API and a New York time zone; 3 tests). All pass.
+- **Checks:** `npm run build` (typecheck and single-file build, about 384 KB), `npm test` (Vitest, 210 tests including 8 property tests and a build check), `npm run test:e2e` (build, then Playwright in the installed Google Chrome, headless, opening `dist/index.html` from disk with a fake Prompt API and a New York time zone; 3 tests). All pass.
 - Open the built file `dist/index.html` in Chrome, never the root `index.html` (that one needs the Vite dev server). The Prompt API works from `file://` in Chrome (tested). Edge has no Prompt API. `prompt()` after `destroy()` rejects with `InvalidStateError`.
 - **Store version is `2`.** An older store (paise, local-time dates) is refused with a message telling the user to delete the `scary-money-manager` IndexedDB in Chrome DevTools. Delete it also to redo setup while testing.
 - **Known data issue on the user's test machine:** some early entries booked a home loan as an asset (the -100 crore bug). The engine now refuses this, but old entries stay until the user reverses them or resets the database.
@@ -32,42 +36,17 @@ A single-file HTML money manager for Chrome, built for Kiroween 2026. It uses Ch
 - **Golden sentences:** `golden/golden.ts` (36 cases against made-up accounts, `runGolden`, `formatReport`), `ui/GoldenCheck.tsx`.
 - **Tests:** next to the code (`*.test.ts(x)`). React tests start with `// @vitest-environment jsdom`; jsdom has `crypto.subtle`, so they can use a real `MemoryKV` vault. Tests use 1000 or 100,000 PBKDF2 iterations for speed. End-to-end tests are in `e2e/`.
 
-## Rules learned from real bugs
-- **Never trust the model with amounts.** `chat/amounts.ts` reads them from the user's message; the model only picks between numbers the user wrote. A message with no number leaves the amount blank. (The model turned "30L" into 3 crore, and invented 100 crore for a sentence with no number.)
-- **Account rules** (`newAccountProblem` and `looksLikeLoan` in `chat/draft.ts`): a new account may only be created where it grows naturally (an asset or expense that receives money, a liability or income source that gives it). Money cannot leave an account that does not exist, and a repayment cannot go to a loan that does not exist. Anything named like a loan, mortgage, EMI, overdraft or credit card must be a liability. These are `account-kind` problems, which get one model retry before any tab redirect.
-- Payments that would leave an asset below zero show a warning on the Confirm Card. The Daily Updates list shows each entry's Dr and Cr lines.
-
 ## Where things are
 | What | Where |
 |---|---|
 | Domain terms (use these exact words) | `GLOSSARY.md` |
 | Hard-to-reverse decisions | `docs/adr/0001` to `0004` |
-| Requirements (all user decisions, Q1 to Q28, plus later changes) | `ideas/scary-money-manager/requirements/requirements.md` |
-| Architecture, data model, AI design, dashboard | `ideas/scary-money-manager/design/design.md` |
+| Rules, product, tech, structure (steering) | `.kiro/steering/` |
+| Requirements (all user decisions, Q1 to Q28, plus later changes) | `.kiro/specs/scary-money-manager/requirements.md` |
+| Architecture, data model, AI design, dashboard | `.kiro/specs/scary-money-manager/design.md` |
 | Export file format, template and JSON Schema | `ideas/scary-money-manager/design/export-format.md` |
-| Task plan | `ideas/scary-money-manager/plan/tasks.md` |
+| Task plan | `.kiro/specs/scary-money-manager/tasks.md` |
+| Agent hooks | `.kiro/hooks/` |
+| Devpost submission guide | `ideas/scary-money-manager/submission/devpost-submission.md` |
 | Research notes | `ideas/scary-money-manager/research/` |
 | App source / end-to-end tests | `src/`, `e2e/` at the repo root |
-
-## Decisions you must not change without asking the user
-- The AI only proposes. The app validates, does all arithmetic and dates, and the user confirms on a Confirm Card. Never write to the Ledger without Confirm.
-- Keys are plain text and opaque. Values are encrypted (PBKDF2-SHA256 about 600k iterations plus AES-256-GCM, random IV per value). Never put names or amounts in keys.
-- The Ledger is append-only. Fix mistakes with a Reversal and a Correction, each with a clear Note.
-- Setup unlocks only when `Assets = Liabilities + Opening Equity` exactly, and the Imbalance is shown.
-- **INR only, whole rupees (integers), no paise or decimals anywhere** (changed from paise by the user after Task 6), lakh/crore display. Decimals are accepted only with a unit and only when the result is whole rupees (`1.2L`).
-- **All dates are IST (Asia/Kolkata) and displayed as DD/MMM/YYYY** (added by the user after Task 6). Dates are stored as ISO `YYYY-MM-DD`. "Today" is the IST date, not the machine's. Entry dates, as-of dates and export timestamps (`+05:30`) are all IST. Never use `toLocaleDateString` or the machine's local date.
-- Revaluations are Profit or Loss (Valuation Gain as Income, Valuation Loss as Expense).
-- One global AI session. Call `session.destroy()` on import and tab close, and rebuild when context usage nears the limit.
-- Stack: Vite, React 19 (latest), TypeScript, d3 and d3-sankey, `vite-plugin-singlefile`. Output is one `dist/index.html`.
-- Theme by Net Worth State: Twilight when net worth is within ±5% of total assets of zero (both sides), otherwise Light above 0 and Dark below 0. Switching is instant. Animations are always on, by the user's choice.
-- Session locks on tab close only (no idle timer).
-- New UI must use the CSS colour variables (`var(--text)`, `var(--bad)`, `C.green` from `src/charts/palette.ts`), never fixed hex colours.
-
-## Working rules
-- Keep planning and design documents under `ideas/scary-money-manager/`. Only `README.md`, `AGENTS.md`, `GLOSSARY.md` and `docs/adr/` live at the repo root (plus build config and `.github/`).
-- Add a term to `GLOSSARY.md` when a new domain concept is settled. Add an ADR only for hard-to-reverse, surprising, real trade-offs.
-- Do not store the password anywhere, and never log values or the key.
-- Ask the user before deleting files, changing a decision above, or adding features not in the requirements.
-- Run `npm run build`, `npm test` and `npm run test:e2e` before calling a change done.
-- Windows with PowerShell: use `;` to chain commands. Do not start long-running dev servers from the agent shell. Ask the user to run them.
-- The agent can drive headless Chrome through Playwright (with a fake AI), but not the real on-device model. Behaviour that depends on Gemini Nano is checked by the user with the golden-sentence AI check.

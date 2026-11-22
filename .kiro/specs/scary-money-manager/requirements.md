@@ -49,7 +49,7 @@ Dashboard (Home), Assets, Liabilities, Goals, Budgets, Daily Updates (Ledger). E
 
 ## 9. Export and import
 - Export is a single JSON file with plain-text keys and encrypted values, optionally encrypted with a new password. [Q17]
-- The app offers a separate download of the **Export JSON Template** (JSON Schema, annotated example, field notes) so other AI tools can read or produce compatible files. See `design/export-format.md`. [Q17]
+- The app offers a separate download of the **Export JSON Template** (JSON Schema, annotated example, field notes) so other AI tools can read or produce compatible files. See `ideas/scary-money-manager/design/export-format.md`. [Q17]
 - Import replaces everything after an explicit warning. A wrong password changes nothing. On import the AI session is destroyed with `session.destroy()`, chat state is cleared, and the balance check runs again. [Q13]
 
 ## 10. Testing
