@@ -14,5 +14,6 @@ inclusion: always
 - `npm test`: all Vitest tests, including a check that the build is one self-contained file.
 - `npm run test:e2e`: build, then the Playwright tests in headless Chrome (New York time zone, to prove dates follow IST).
 - `node e2e/shots.mjs`: screenshots of the main screens into `ideas/scary-money-manager/design/shots/` (after a build).
+- `node e2e/record-gifs.mjs` then `python e2e/make-gifs.py`: the README GIFs (Pillow, imageio, NumPy; `PYTHONIOENCODING=utf-8` on Windows).
 
 Run build, unit tests and e2e before calling a change done. Do not start long-running dev servers from the agent shell; ask the user to run them. On Windows PowerShell chain commands with `;`.
