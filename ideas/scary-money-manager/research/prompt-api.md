@@ -12,7 +12,9 @@ Source: https://developer.chrome.com/docs/ai/prompt-api (fetched 2026-11-22). Co
 - The model is downloaded separately the first time an origin uses the API (so the origin matters).
 
 ## Open (to resolve in Task 2)
-- Does the API run from a page opened as `file://`? The docs do not say. Result: **not yet tested**.
+- Does the API run from a page opened as `file://`? The docs do not say. Result (2026-11-22, Windows): **works from `file://` in Chrome.** `isSecureContext` true, `crypto.subtle` and IndexedDB available, `availability()` returned `available`, a session was created, the test prompt replied "ready", and `prompt()` after `destroy()` rejected with `InvalidStateError: ... The model execution session has been destroyed.` (this is the error type tests should assert). **Edge does not expose `LanguageModel`** (`API missing`), so the unsupported-device screen must name Chrome as the required browser and handle a missing API, not only `unavailable`. How the spike page was run: the spike page is built (`npm run build`, then open `dist/index.html` from disk in Chrome and press Start). It reports protocol, `isSecureContext`, `crypto.subtle`, IndexedDB, `LanguageModel.availability()`, download progress, a test reply, and whether `prompt()` rejects after `destroy()`. Record the output here.
+
+Built file size with React 19 only (no d3 yet): 430,854 bytes.
 - Does the model download once per origin? A different `localhost` port may be a different origin and download again.
 - Exact test-prompt behaviour on a loaded model and typical latency of a proposal.
 

@@ -6,9 +6,10 @@ Instructions and status for future agent sessions. Read this first, and update t
 A single-file HTML money manager for Chrome, built for Kiroween 2026. It uses Chrome's on-device Prompt API (Gemini Nano) to turn plain text into double-entry ledger entries. Values are encrypted with a session password. The theme follows net worth. The original brief is `ideas/.ignore/PROMPTS.md`.
 
 ## Status
-- **Phase:** planning complete. Task 1 (docs) done. **Next: Task 2** (project scaffold and the `file://` spike).
-- **No application code exists yet.** `src/` has not been created.
-- **Open question:** whether the Prompt API runs from `file://`. Test it in Task 2. If it fails, document serving the same single file over `http://localhost` (see `docs/adr/0004-single-file-build.md`).
+- **Phase:** Tasks 1 and 2 done. **Next: Task 3** (AI readiness screen). Scaffold: Vite 8, React 19, TypeScript, Vitest, singlefile. `src/spike/Spike.tsx` is a throwaway diagnostics page that Task 3 replaces.
+- **Resolved:** the Prompt API works from `file://` in Chrome (tested). No localhost fallback needed. Edge has no `LanguageModel`, so the unsupported screen must tell the user to use Chrome. `prompt()` after `destroy()` rejects with `InvalidStateError`.
+- Open the built file from `dist/index.html`, never the root `index.html` (that one needs the Vite dev server).
+- Commands: `npm run build` (typecheck plus single-file build), `npm test` (Vitest, includes a build check).
 - Task list and progress: `ideas/scary-money-manager/plan/tasks.md`.
 
 ## Where things are

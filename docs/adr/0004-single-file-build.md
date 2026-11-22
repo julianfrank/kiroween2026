@@ -5,4 +5,4 @@ The product is distributed as a single `dist/index.html`. We keep a normal modul
 ## Consequences
 
 - Building needs Node. Running the result needs only Chrome.
-- If the Prompt API does not work from `file://` (to be tested in Task 2), the same file is served from `http://localhost` instead.
+- The Prompt API was tested from `file://` in Chrome and works, so the file is opened directly from disk. Edge does not provide the API.
