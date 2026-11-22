@@ -9,6 +9,7 @@ import {
   type DraftRow,
   type SetupResult,
 } from '../setup/setup';
+import { KiroGhost } from '../theme/Crypt';
 
 function blankRow(today: string, kind: DraftRow['kind'] = 'asset'): DraftRow {
   return {
@@ -52,7 +53,7 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
       : `Assets are ${formatRupees(-ev.imbalance)} less than Liabilities + Opening Equity`;
 
   return (
-    <main style={{ fontFamily: 'system-ui', padding: 24, maxWidth: 900, margin: '0 auto' }}>
+    <main style={{ padding: 28, maxWidth: 900, margin: '0 auto' }}>
       <h1>Set up your opening balances</h1>
       <p>
         List what you own and what you owe. Use the date each one started, even if it was years ago
@@ -161,6 +162,7 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
 
       <section
         aria-live="polite"
+        className={`imbalance-panel ${balanced ? 'balanced' : 'unbalanced'}`}
         style={{
           margin: '16px 0',
           padding: 16,
@@ -173,7 +175,10 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
           Liabilities {formatRupees(ev.liabilities)} + Opening Equity {formatRupees(ev.equity)} ={' '}
           {formatRupees(ev.liabilities + ev.equity)}
         </div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: balanced ? 'var(--good)' : 'var(--bad)' }}>
+        <div className="panel-ghost">
+          <KiroGhost size={48} mood={balanced ? 'cheer' : 'worried'} />
+        </div>
+        <div className="imbalance-figure" style={{ fontSize: 28, fontWeight: 700, color: balanced ? 'var(--good)' : 'var(--bad)' }}>
           Imbalance: {formatRupees(ev.imbalance)}
         </div>
         <div>{imbalanceText}</div>

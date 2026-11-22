@@ -68,7 +68,7 @@ State: list of opening lines with `asOfDate`, plus Opening Equity. `imbalance = 
 - **Planned Sankey** for the same range: sources are Income (actual income for the range), targets are Budget limits and Goal monthly contributions (target remaining divided by months left, or target divided by 12 when no date), plus "Unallocated".
 - **Sub-tabs** (each is a pure data builder plus a d3 view): Income vs Expense vs Budget trend (12 months), Income vs Savings/Investments vs Goals trend, Net worth over time (month-end), Expense breakdown, Budget utilisation, Goal progress with projected completion (average monthly contribution), Liabilities summary.
 
-## 8. Theme and animation
+## 8. Theme and animation`n`nThe entry screens (loader, password, Setup) have their own always-dark theme, "the crypt": see `entry-theme.md`. Everything below is the main app.
 - `netWorthState(netWorth, totalAssets)`: Twilight if `|netWorth| ≤ 0.05 × totalAssets` (a band on both sides of zero; total assets below zero count as zero), otherwise Light if `netWorth > 0` and Dark if `netWorth < 0`. Pure function, no hysteresis, recomputed on every render so it changes the moment an Entry is saved. Chart colours are CSS variables (`--c-*`) with a light and a night palette.
 - Light: white and pale grey "Office" surfaces, orange and purple accents, small pumpkin and ghost touches. Dark: near-black, orange, purple and bone-white, bats and cobwebs. Twilight: dusk gradient between the two.
 - Animations (CSS and SVG): coins flow from source Account to target Account on each confirmed Entry, a net worth counter animates, positive states show gentle fireflies, negative states show flickering lights. Always on.

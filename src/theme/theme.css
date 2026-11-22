@@ -336,3 +336,13 @@ h2 {
 }
 @keyframes rise { 0% { transform: translate(-50%, 12px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translate(-50%, -10px); opacity: 0; } }
 @keyframes sink { 0% { transform: translate(-50%, -10px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translate(-50%, 12px); opacity: 0; } }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+

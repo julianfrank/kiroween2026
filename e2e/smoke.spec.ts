@@ -50,6 +50,8 @@ function noNetwork(page: Page, seen: string[]) {
 async function setUp(page: Page) {
   await page.goto(FILE);
   await expect(page.getByText('There is no database in this browser yet.')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'crypt');
+  await expect(page.locator('.crypt-scene .flyer')).toHaveCount(5);
   await page.getByPlaceholder('Password', { exact: true }).fill('short');
   await expect(page.getByRole('button', { name: 'Start New Database' })).toHaveCount(0); // 7 characters minimum
   await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);

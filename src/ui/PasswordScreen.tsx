@@ -7,6 +7,7 @@ import { ImportError } from '../export/validate';
 import type { KV } from '../store/kv';
 import type { LoadedData } from '../store/repo';
 import { WrongPasswordError, hasVault, unlockVault, type Vault } from '../store/vault';
+import { KiroGhost } from '../theme/Crypt';
 
 type Panel = 'none' | 'upload' | 'new';
 
@@ -40,6 +41,9 @@ export function PasswordScreen({
   const [waitUntil, setWaitUntil] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [message, setMessage] = useState('');
+  /** The ghost covers its eyes while the password is typed, and shakes its head at a wrong one. */
+  const [peeking, setPeeking] = useState(false);
+  const [shakes, setShakes] = useState(0);
 
   useEffect(() => {
     void hasVault(kv).then(setExists);
@@ -56,6 +60,7 @@ export function PasswordScreen({
   const blocked = busy || waitSeconds > 0;
 
   function wrong(text: string) {
+    setShakes((s) => s + 1);
     const n = failures + 1;
     setFailures(n);
     setNow(Date.now());
@@ -117,7 +122,10 @@ export function PasswordScreen({
   if (exists === null) return <main style={{ padding: 24 }}>Loading…</main>;
 
   return (
-    <main style={{ padding: 24, maxWidth: 480, margin: '0 auto' }}>
+    <main style={{ padding: 28, maxWidth: 480, margin: '0 auto' }}>
+      <div key={shakes} className={`sentry${shakes ? ' react-shake' : ''}`}>
+        <KiroGhost size={64} mood={shakes && message ? 'worried' : peeking && password ? 'shy' : 'happy'} />
+      </div>
       <h1>Enter your password</h1>
       <p>
         This password encrypts every value you store or export. It is not saved anywhere, so{' '}
@@ -136,6 +144,8 @@ export function PasswordScreen({
             setPassword(e.target.value);
             setMessage('');
           }}
+          onFocus={() => setPeeking(true)}
+          onBlur={() => setPeeking(false)}
           style={{ width: '100%' }}
         />
         <div style={{ opacity: 0.75, fontSize: 13, margin: '4px 0 12px' }}>

@@ -47,6 +47,22 @@ describe('password screen', () => {
     expect(btn('Start New Database')).toBeTruthy();
   });
 
+  it('the ghost covers its eyes while the password is typed, and worries at a wrong one', async () => {
+    const s = await store('secret-pw', 'Cash');
+    screenFor(s.kv);
+    await screen.findByText('A database is stored in this browser.');
+    const ghost = () => document.querySelector('.sentry .kiro-ghost')!.getAttribute('class');
+    expect(ghost()).toContain('mood-happy');
+    const field = screen.getByLabelText('Password');
+    fireEvent.focus(field);
+    type('Password', 'not-the-one');
+    expect(ghost()).toContain('mood-shy');
+    fireEvent.click(btn('Unlock')!);
+    await screen.findByText('Wrong password.');
+    expect(ghost()).toContain('mood-worried');
+    expect(document.querySelector('.sentry.react-shake')).not.toBeNull();
+  });
+
   it('with no database there is nothing to unlock', async () => {
     screenFor(new MemoryKV());
     await screen.findByText('There is no database in this browser yet.');

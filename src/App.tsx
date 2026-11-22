@@ -14,6 +14,7 @@ import { DataPanel } from './ui/DataPanel';
 import { PasswordScreen } from './ui/PasswordScreen';
 import { Readiness } from './ui/Readiness';
 import { SetupScreen } from './ui/SetupScreen';
+import { EntryStage } from './theme/Crypt';
 
 const lm: LanguageModelLike | undefined =
   'LanguageModel' in globalThis ? (LanguageModel as unknown as LanguageModelLike) : undefined;
@@ -57,7 +58,6 @@ export function App() {
   const onNuke = async () => {
     host.destroy();
     await nukeStore(kv);
-    delete document.documentElement.dataset.theme;
     setData(null);
     setVault(null);
     setEpoch((e) => e + 1);
@@ -69,7 +69,6 @@ export function App() {
     host.destroy();
     await nukeStore(kv);
     const v = await createVault(kv, password);
-    delete document.documentElement.dataset.theme;
     setData(null);
     setVault(v);
     setEpoch((e) => e + 1);
@@ -77,19 +76,37 @@ export function App() {
   };
 
   if (state.step !== 'ready') {
-    return <Readiness state={state} onStart={() => void readiness.start()} />;
+    return (
+      <EntryStage>
+        <Readiness state={state} onStart={() => void readiness.start()} />
+      </EntryStage>
+    );
   }
-  if (!vault) return <PasswordScreen kv={kv} onUnlocked={setVault} onBeforeReplace={onBeforeReplace} onImported={onImported} onStartNew={onStartNew} />;
-  if (!data) return <main style={{ padding: 24 }}>Loading…</main>;
+  if (!vault) {
+    return (
+      <EntryStage>
+        <PasswordScreen kv={kv} onUnlocked={setVault} onBeforeReplace={onBeforeReplace} onImported={onImported} onStartNew={onStartNew} />
+      </EntryStage>
+    );
+  }
+  if (!data) {
+    return (
+      <EntryStage>
+        <main style={{ padding: 28, maxWidth: 420, margin: '0 auto' }}>Opening the crypt…</main>
+      </EntryStage>
+    );
+  }
 
   if (data.accounts.size === 0) {
     return (
+      <EntryStage>
       <SetupScreen
         onDone={async ({ accounts, ledger }) => {
           await saveSetup(vault, accounts, ledger.entries);
           setData({ accounts, ledger, ...emptyTargets() });
         }}
       />
+      </EntryStage>
     );
   }
   return (
