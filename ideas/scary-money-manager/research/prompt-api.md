@@ -22,3 +22,9 @@ Built file size with React 19 only (no d3 yet): 430,854 bytes.
 - Add a Start button before `create()`.
 - Show the unsupported-device screen when `availability()` returns `unavailable`.
 - Use `responseConstraint` for Proposed Entries.
+
+## Context usage names (Task 12)
+- The current docs use `session.contextUsage` and `session.contextWindow`. Older Chrome builds used `inputUsage` and `inputQuota`. `AiHost` reads either, rebuilds at 80%, and also recovers once from `QuotaExceededError`.
+
+## Golden-sentence accuracy (Task 12)
+- Not yet measured. Run "Data and password" > "Check the AI" in Chrome with the real model and record the report here (date, Chrome version, score, repeated failures).

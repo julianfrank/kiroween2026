@@ -7,7 +7,7 @@ import { buildSetup, differenceEquity, evaluateDraft, type DraftRow } from '../s
 import { MemoryKV } from '../store/kv';
 import { saveSetup } from '../store/repo';
 import { createVault, unlockVault } from '../store/vault';
-import { DataPanel } from './DataPanel';
+import { DataPanel, NukeForm } from './DataPanel';
 
 afterEach(cleanup);
 
@@ -73,7 +73,7 @@ describe('Data and password panel', () => {
     const before = JSON.stringify([...b.kv.data]);
     const { onBeforeReplace, onImported } = panel(b);
 
-    fireEvent.change(screen.getByLabelText('Export file'), { target: { files: [new File([fileText], 'export.json', { type: 'application/json' })] } });
+    fireEvent.change(screen.getByLabelText('File to import'), { target: { files: [new File([fileText], 'export.json', { type: 'application/json' })] } });
     expect(await screen.findByText(/replaces everything/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Password of the file'), { target: { value: 'wrong' } });
     const importBtn = screen.getByRole('button', { name: 'Import' }) as HTMLButtonElement;
@@ -98,7 +98,7 @@ describe('Data and password panel', () => {
   it('a file that is not an export is explained', async () => {
     const s = await store('pw', 'Cash');
     panel(s);
-    fireEvent.change(screen.getByLabelText('Export file'), { target: { files: [new File(['{"hello":1}'], 'x.json')] } });
+    fireEvent.change(screen.getByLabelText('File to import'), { target: { files: [new File(['{"hello":1}'], 'x.json')] } });
     expect((await screen.findByRole('alert')).textContent).toContain('cannot be imported');
   });
 
@@ -115,5 +115,36 @@ describe('Data and password panel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
     await waitFor(() => expect(onPasswordChanged).toHaveBeenCalledOnce(), { timeout: 5000 });
     await expect(unlockVault(s.kv, 'next')).resolves.toBeTruthy();
+  });
+});
+
+describe('start over', () => {
+  it('only deletes after DELETE is typed exactly', async () => {
+    const onNuke = vi.fn(async () => {});
+    render(<NukeForm onNuke={onNuke} />);
+    const button = screen.getByRole('button', { name: 'Delete everything and start fresh' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'delete' } });
+    expect(button.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } });
+    expect(button.disabled).toBe(false);
+    fireEvent.click(button);
+    await waitFor(() => expect(onNuke).toHaveBeenCalledOnce());
+  });
+
+  it('shows the error and keeps the data when deleting fails', async () => {
+    render(<NukeForm onNuke={async () => { throw new Error('disk busy'); }} />);
+    fireEvent.change(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Delete everything and start fresh' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('disk busy');
+  });
+
+  it('the Data and password panel offers it only when asked to', async () => {
+    const s = await store('pw', 'Cash');
+    const { unmount } = render(<DataPanel kv={s.kv} vault={s.vault} onBeforeReplace={() => {}} onImported={() => {}} onPasswordChanged={() => {}} />);
+    expect(screen.queryByRole('heading', { name: 'Start over' })).toBeNull();
+    unmount();
+    render(<DataPanel kv={s.kv} vault={s.vault} onBeforeReplace={() => {}} onImported={() => {}} onPasswordChanged={() => {}} onNuke={async () => {}} />);
+    expect(screen.getByRole('heading', { name: 'Start over' })).toBeTruthy();
   });
 });

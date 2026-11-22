@@ -12,6 +12,7 @@ function stripNonMoney(text: string): string {
     .replace(/\b\d{1,2}[/\-.](?:\d{1,2}|[a-z]{3,9})[/\-.]\d{4}\b/gi, ' ')
     .replace(/\b\d{4}-\d{2}-\d{2}\b/g, ' ')
     .replace(new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH}(?:,?\\s*\\d{4})?`, 'gi'), ' ')
+    .replace(new RegExp(`\\b${MONTH}\\s+\\d{4}\\b`, 'gi'), ' ')
     .replace(new RegExp(`\\b${MONTH}\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s*\\d{4})?`, 'gi'), ' ')
     .replace(/\b\d+\s*(?:day|days|week|weeks|month|months|year|years|time|times|%|percent)\b/gi, ' ')
     .replace(/\b(?:in|during|of|year|fy)\s+(?:19|20)\d{2}\b/gi, ' ');

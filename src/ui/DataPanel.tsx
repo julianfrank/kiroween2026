@@ -11,6 +11,8 @@ import {
 } from '../export/format';
 import { TEMPLATE_FILE_NAME, buildTemplate } from '../export/template';
 import { ImportError } from '../export/validate';
+import type { PromptHost } from '../chat/proposal';
+import { GoldenCheck } from './GoldenCheck';
 import type { KV } from '../store/kv';
 import type { LoadedData } from '../store/repo';
 import { WrongPasswordError, changePassword, type Vault } from '../store/vault';
@@ -73,7 +75,7 @@ export function ImportForm({
   return (
     <form onSubmit={submit} aria-label="Import">
       <p>
-        <input type="file" accept=".json,application/json" aria-label="Export file" onChange={(e) => void pick(e.target.files?.[0])} />
+        <input type="file" accept=".json,application/json" aria-label="File to import" onChange={(e) => void pick(e.target.files?.[0])} />
       </p>
       {info && (
         <p>
@@ -109,13 +111,54 @@ export function ImportForm({
   );
 }
 
-export function DataPanel({
-  kv,
+export const NUKE_WORD = 'DELETE';
+
+/** Wipe everything in this browser: entries, accounts, budgets, goals and the password. */
+export function NukeForm({ onNuke }: { onNuke: () => Promise<void> }) {
+  const [word, setWord] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  return (
+    <div>
+      <p style={{ color: 'var(--bad)' }}>
+        This permanently deletes every account, entry, budget and goal stored in this browser, and the password. The app
+        then starts fresh: you choose a new password and do Setup again. It cannot be undone, so export first if you
+        might want the data back.
+      </p>
+      <input
+        aria-label={`Type ${NUKE_WORD} to confirm`}
+        placeholder={`Type ${NUKE_WORD} to confirm`}
+        value={word}
+        onChange={(e) => setWord(e.target.value)}
+      />{' '}
+      <button
+        disabled={word !== NUKE_WORD || busy}
+        onClick={async () => {
+          setBusy(true);
+          setMessage('');
+          try {
+            await onNuke();
+          } catch (e) {
+            setMessage(`Could not delete the data: ${errText(e)}`);
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? 'Deleting…' : 'Delete everything and start fresh'}
+      </button>
+      {message && <p role="alert">{message}</p>}
+    </div>
+  );
+}
+
+export function DataPanel({  kv,
   vault,
   onBeforeReplace,
   onImported,
   onPasswordChanged,
   save = downloadText,
+  host,
+  onNuke,
 }: {
   kv: KV;
   vault: Vault;
@@ -123,6 +166,10 @@ export function DataPanel({
   onImported: (vault: Vault, data: LoadedData) => void;
   onPasswordChanged: (vault: Vault) => void;
   save?: SaveFile;
+  /** When given, the panel offers the golden-sentence AI check. */
+  host?: PromptHost;
+  /** When given, the panel offers to delete everything and start fresh. */
+  onNuke?: () => Promise<void>;
 }) {
   const [mode, setMode] = useState<'current' | 'new'>('current');
   const [filePw, setFilePw] = useState('');
@@ -213,6 +260,20 @@ export function DataPanel({
         <div><small>A forgotten password cannot be recovered.</small></div>
       </form>
       {pwMsg && <p role="status">{pwMsg}</p>}
+
+      {host && (
+        <>
+          <h2>Check the AI</h2>
+          <GoldenCheck host={host} />
+        </>
+      )}
+
+      {onNuke && (
+        <>
+          <h2>Start over</h2>
+          <NukeForm onNuke={onNuke} />
+        </>
+      )}
     </section>
   );
 }
