@@ -11,6 +11,9 @@ describe('single-file build', () => {
     const markup = html.replace(/<script[^>]*>[\s\S]*?<\/script>/g, '<script></script>');
     expect(html).toMatch(/<script type="module"[^>]*>/);
     expect(markup).not.toMatch(/<script[^>]+src=/);
-    expect(markup).not.toMatch(/<link[^>]+(href|rel="stylesheet")/);
+    expect(markup).not.toMatch(/<link[^>]+rel="stylesheet"/);
+    // Links may only carry embedded data (the favicon), never a file or a URL.
+    for (const m of markup.matchAll(/<link[^>]+href="([^"]*)"/g)) expect(m[1]).toMatch(/^data:/);
+    expect(markup).toMatch(/<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
   }, 120_000);
 });
