@@ -45,6 +45,17 @@ export function parseRupees(text: string): Rupees | null {
   return rupees;
 }
 
+/** Short form for chart axes: ₹12k, ₹1.5L, ₹2.5cr. Whole rupees below ₹1,000. */
+export function formatCompact(rupees: Rupees): string {
+  const sign = rupees < 0 ? '-' : '';
+  const n = Math.abs(rupees);
+  const trim = (x: number) => String(Math.round(x * 10) / 10);
+  if (n >= 10_000_000) return `${sign}₹${trim(n / 10_000_000)}cr`;
+  if (n >= 100_000) return `${sign}₹${trim(n / 100_000)}L`;
+  if (n >= 1_000) return `${sign}₹${trim(n / 1_000)}k`;
+  return `${sign}₹${n}`;
+}
+
 const formatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',

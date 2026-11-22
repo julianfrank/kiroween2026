@@ -45,7 +45,7 @@ const expense = { intent: 'expense', amount: '800', date: 'yesterday', fromAccou
 const budget = { intent: 'set-budget', amount: '8000', date: '', fromAccount: '', toAccount: 'Food' };
 const goal = { intent: 'set-goal', amount: '3L', date: 'Dec 2037', fromAccount: 'Safety net', toAccount: 'Savings' };
 
-const tab = (name: string) => screen.getByRole('button', { name });
+const tab = (name: string) => within(screen.getByRole('navigation', { name: 'Main tabs' })).getByRole('button', { name });
 const panel = (name: string) => screen.getByRole('region', { name });
 
 async function say(chat: string, text: string) {
@@ -61,7 +61,7 @@ describe('the six tabs', () => {
     for (const name of ['Dashboard', 'Assets', 'Liabilities', 'Goals', 'Budgets', 'Daily Updates']) {
       expect(tab(name)).toBeTruthy();
     }
-    expect(screen.getByText(/Net worth/)).toBeTruthy();
+    expect(screen.getByText('Net worth', { selector: 'p' })).toBeTruthy();
     // Inactive tabs are hidden, so open each one before looking inside it.
     fireEvent.click(tab('Assets'));
     expect(within(screen.getByRole('table', { name: 'Assets' })).getByText('Cash')).toBeTruthy();
@@ -97,6 +97,47 @@ describe('the six tabs', () => {
     fireEvent.click(reverseBtn);
     await waitFor(() => expect(within(list).getByText('(reversed)')).toBeTruthy());
     expect(within(list).getByText(/\[reversal\]/)).toBeTruthy();
+  });
+
+  it('Dashboard: two Sankeys, seven chart tabs, a date range, and live updates after an entry', async () => {
+    const { Harness } = world([{ ...expense, date: '' }]);
+    render(<Harness />);
+    // Both Sankeys start empty, then fill in once an entry is confirmed.
+    expect(screen.getByRole('img', { name: 'Actual Sankey: no activity in this period' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Planned Sankey: no activity in this period' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Date range' })).toBeTruthy();
+    expect((screen.getByLabelText('From date') as HTMLInputElement).value).toMatch(/^01\/[A-Z][a-z]{2}\/\d{4}$/);
+
+    fireEvent.click(tab('Daily Updates'));
+    await say('Daily Updates chat', 'Paid Rs.800 for groceries today');
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
+    await screen.findByRole('list', { name: 'Entries' });
+    fireEvent.click(tab('Dashboard'));
+    await waitFor(() => expect(screen.getByRole('img', { name: /^Actual Sankey, total ₹800$/ })).toBeTruthy());
+    expect(screen.getAllByText(/Food ₹800/).length).toBeGreaterThan(0);
+
+    const charts = within(screen.getByRole('navigation', { name: 'Charts' })).getAllByRole('button');
+    expect(charts.map((b) => b.textContent)).toEqual([
+      'Income vs Expense vs Budget', 'Savings, Investments and Goals', 'Net worth', 'Expense breakdown',
+      'Budget utilisation', 'Goal progress', 'Liabilities summary',
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Expense breakdown' }));
+    expect(within(screen.getByRole('list', { name: 'Expense breakdown' })).getByText('Food')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Liabilities summary' }));
+    expect(within(screen.getByRole('list', { name: 'Liabilities' })).getByText('Loan - Tom')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Net worth' }));
+    expect(screen.getByRole('img', { name: 'Net worth at each month end' })).toBeTruthy();
+  });
+
+  it('Dashboard: a bad date range is explained and the last good range stays', () => {
+    const { Harness } = world([expense]);
+    render(<Harness />);
+    fireEvent.change(screen.getByLabelText('From date'), { target: { value: '31/Feb/2026' } });
+    expect(screen.getByText('Enter both dates as DD/MMM/YYYY (IST).')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('From date'), { target: { value: '01/Jan/2030' } });
+    expect(screen.getByText('The start date must not be after the end date.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Last month' }));
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('Budgets: chat sets a budget and the list shows spending against it', async () => {

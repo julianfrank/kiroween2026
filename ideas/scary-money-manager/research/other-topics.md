@@ -9,14 +9,14 @@ Status: **notes from prior knowledge, not yet verified against current sources.*
 - Measure derivation time on the target machine. Show a "deriving key" indicator.
 - Store the derived key as a non-extractable `CryptoKey` in memory only.
 
-## d3-sankey limits (verify in Task 9)
+## d3-sankey limits (checked in Task 9)
 - d3-sankey needs an acyclic graph. A cycle throws an error. So "Drawn from savings" must be its own source node, separate from the savings target node.
-- Zero-value links should be filtered out. Very small links need a minimum visual width.
+- Checked: the Actual and Planned graphs are built as sources -> "Money in" hub -> targets, so they have no cycles, including the "Drawn from <account>" case (a test lays out every graph). Zero-value links are filtered out.`n- Zero-value links should be filtered out. Very small links need a minimum visual width.
 - Node order should be stable between the Actual and Planned diagrams so they compare easily.
 
 ## Build and bundle size (verify in Task 2)
 - `vite-plugin-singlefile` inlines JS and CSS into one HTML. Expect React 19 plus d3 and d3-sankey to total a few hundred KB, which is fine for local use.
-- Measure the actual size after the scaffold and record it here.
+- Measured: React 19 only was 430,854 bytes. With d3, d3-sankey and the whole app (Task 9) `dist/index.html` is 558,966 bytes.
 
 ## Lakh/crore formatting (Task 5)
 - `Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })` gives `₹1,20,000.00` grouping. Use it for display and keep parsing separate.

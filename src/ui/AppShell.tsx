@@ -4,7 +4,8 @@ import { CHAT_TABS, TAB_LABELS, type ChatTabId } from '../chat/intents';
 import type { LoadedData } from '../store/repo';
 import type { Vault } from '../store/vault';
 import { ChatPanel, type Incoming } from './ChatPanel';
-import { AccountList, BudgetsList, DailyList, DashboardTab, GoalsList } from './lists';
+import { Dashboard } from './Dashboard';
+import { AccountList, BudgetsList, DailyList, GoalsList } from './lists';
 
 type TabId = 'dashboard' | ChatTabId;
 const ORDER: TabId[] = ['dashboard', 'assets', 'liabilities', 'goals', 'budgets', 'daily'];
@@ -57,7 +58,7 @@ export function AppShell({
 
       <div hidden={tab !== 'dashboard'}>
         <h2>Dashboard</h2>
-        <DashboardTab data={data} />
+        <Dashboard data={data} />
       </div>
 
       {CHAT_TABS.map((t) => (

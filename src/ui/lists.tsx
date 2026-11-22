@@ -9,23 +9,6 @@ import { ConfirmCard } from './ConfirmCard';
 
 const cell = { paddingRight: 16, textAlign: 'left' as const };
 
-export function DashboardTab({ data }: { data: LoadedData }) {
-  const accounts = [...data.accounts.values()];
-  const assets = accounts.filter((a) => a.kind === 'asset').reduce((s, a) => s + data.ledger.balance(a.key), 0);
-  const liabilities = accounts.filter((a) => a.kind === 'liability').reduce((s, a) => s + data.ledger.balance(a.key), 0);
-  return (
-    <div>
-      <p style={{ fontSize: 24 }}>
-        Net worth <b>{formatRupees(assets - liabilities)}</b>
-      </p>
-      <p>
-        Assets {formatRupees(assets)}, Liabilities {formatRupees(liabilities)}
-      </p>
-      <p style={{ opacity: 0.7 }}>The Sankey diagrams and trend charts arrive in the next task.</p>
-    </div>
-  );
-}
-
 export function AccountList({ data, kind }: { data: LoadedData; kind: 'asset' | 'liability' }) {
   const rows = [...data.accounts.values()].filter((a) => a.kind === kind && !a.system);
   if (rows.length === 0) return <p>No {kind} accounts yet.</p>;
