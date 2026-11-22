@@ -8,6 +8,7 @@ import {
   randomSalt,
   toBase64,
 } from '../crypto/crypto';
+import { passwordProblem } from '../crypto/password';
 import type { KV } from './kv';
 
 // Fixed, readable keys (ADR-0001). Everything else is an opaque ID and its value is encrypted.
@@ -153,7 +154,8 @@ export async function changePassword(
   newPassword: string,
   iterations = DEFAULT_ITERATIONS,
 ): Promise<Vault> {
-  if (newPassword.length === 0) throw new Error('Choose a new password.');
+  const tooShort = passwordProblem(newPassword);
+  if (tooShort) throw new Error(tooShort);
   const current = await unlockVault(kv, currentPassword);
   const plain = await current.plaintextItems();
   const salt = randomSalt();
@@ -162,4 +164,11 @@ export async function changePassword(
   for (const [k, text] of plain) entries.push([k, await encryptValue(key, text)]);
   await kv.replaceAll(entries);
   return new Vault(kv, key);
+}
+/**
+ * Delete the whole store: every entry, account, budget, goal and the password check. Afterwards the app
+ * asks for a new password and starts from Setup. This cannot be undone.
+ */
+export async function nukeStore(kv: KV): Promise<void> {
+  await kv.clear();
 }

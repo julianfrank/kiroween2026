@@ -49,10 +49,13 @@ function noNetwork(page: Page, seen: string[]) {
 
 async function setUp(page: Page) {
   await page.goto(FILE);
-  await expect(page.getByRole('heading', { name: 'Choose a password' })).toBeVisible();
+  await expect(page.getByText('There is no database in this browser yet.')).toBeVisible();
+  await page.getByPlaceholder('Password', { exact: true }).fill('short');
+  await expect(page.getByRole('button', { name: 'Start New Database' })).toHaveCount(0); // 7 characters minimum
   await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
+  await page.getByRole('button', { name: 'Start New Database' }).click();
   await page.getByPlaceholder('Repeat password').fill(PASSWORD);
-  await page.getByRole('button', { name: 'Create' }).click();
+  await page.getByRole('button', { name: 'Create new database' }).click();
 
   await expect(page.getByRole('heading', { name: 'Set up your opening balances' })).toBeVisible();
   await page.getByPlaceholder('House, Bank, Cash').fill('Cash');
@@ -115,7 +118,7 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   // Reload: the data is still there behind the password.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Enter your password' })).toBeVisible();
-  await page.getByPlaceholder('Password', { exact: true }).fill('not it');
+  await page.getByPlaceholder('Password', { exact: true }).fill('not it at all');
   await page.getByRole('button', { name: 'Unlock' }).click();
   await expect(page.getByText('Wrong password.')).toBeVisible();
   await expect(page.getByRole('button', { name: /Try again in \d+s/ })).toBeVisible();
@@ -131,13 +134,14 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   const fresh = await clean.newPage();
   noNetwork(fresh, seen);
   await fresh.goto(FILE);
-  await fresh.getByText('Or start from an export file').click();
+  await fresh.getByPlaceholder('Password', { exact: true }).fill('wrong-password');
+  await fresh.getByRole('button', { name: 'Upload new file' }).click();
   await fresh.getByLabel('File to import').setInputFiles({ name: 'export.json', mimeType: 'application/json', buffer: Buffer.from(file) });
-  await fresh.getByLabel('Password of the file').fill('wrong');
-  await fresh.getByRole('button', { name: 'Import', exact: true }).click();
-  await expect(fresh.getByText('Wrong password for this file. Nothing was changed.')).toBeVisible();
-  await fresh.getByLabel('Password of the file').fill(PASSWORD);
-  await fresh.getByRole('button', { name: 'Import', exact: true }).click();
+  await fresh.getByRole('button', { name: 'Open this file' }).click();
+  await expect(fresh.getByText('This password does not open the file. Nothing was changed.')).toBeVisible();
+  await fresh.waitForTimeout(1200);
+  await fresh.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
+  await fresh.getByRole('button', { name: 'Open this file' }).click();
   await expect(fresh.getByRole('heading', { name: 'Scary Money Manager' })).toBeVisible();
   await expect(fresh.locator('html')).toHaveAttribute('data-theme', 'dark');
   const destroyed = await fresh.evaluate(() => (window as unknown as { __destroyed: number }).__destroyed);
@@ -149,18 +153,21 @@ test('the single file runs the whole flow offline: setup, chat, theme, charts, e
   await fresh.getByRole('navigation', { name: 'Main tabs' }).getByRole('button', { name: 'Data and password' }).click();
   await fresh.getByLabel('Type DELETE to confirm').fill('DELETE');
   await fresh.getByRole('button', { name: 'Delete everything and start fresh' }).click();
-  await expect(fresh.getByRole('heading', { name: 'Choose a password' })).toBeVisible();
+  await expect(fresh.getByText('There is no database in this browser yet.')).toBeVisible();
   await fresh.getByPlaceholder('Password', { exact: true }).fill('brand new');
+  await fresh.getByRole('button', { name: 'Start New Database' }).click();
   await fresh.getByPlaceholder('Repeat password').fill('brand new');
-  await fresh.getByRole('button', { name: 'Create' }).click();
+  await fresh.getByRole('button', { name: 'Create new database' }).click();
   await expect(fresh.getByRole('heading', { name: 'Set up your opening balances' })).toBeVisible();
 
-  // Forgot the password: start over from the password screen.
+  // Forgot the password: Start New Database deletes the old one and starts empty.
   await page.reload();
-  await page.getByText('Forgot your password? Start over').click();
-  await page.getByLabel('Type DELETE to confirm').fill('DELETE');
-  await page.getByRole('button', { name: 'Delete everything and start fresh' }).click();
-  await expect(page.getByRole('heading', { name: 'Choose a password' })).toBeVisible();
+  await page.getByPlaceholder('Password', { exact: true }).fill('a new start');
+  await page.getByRole('button', { name: 'Start New Database' }).click();
+  await expect(page.getByText(/deletes/)).toBeVisible();
+  await page.getByPlaceholder('Repeat password').fill('a new start');
+  await page.getByRole('button', { name: 'Delete and start new' }).click();
+  await expect(page.getByRole('heading', { name: 'Set up your opening balances' })).toBeVisible();
 
   expect(seen).toEqual([]);
   expect(errors).toEqual([]);

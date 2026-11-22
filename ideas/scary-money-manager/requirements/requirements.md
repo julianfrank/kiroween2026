@@ -62,3 +62,8 @@ Multi-currency, live exchange rates, weekly/quarterly budgets, budget carry-over
 - Every date shown on screen is DD/MMM/YYYY (for example 22/Nov/2026).
 - All dates are Indian Standard Time (Asia/Kolkata). "Today" is the IST date, whatever the computer's time zone is. Entry dates, as-of dates and export timestamps are IST (timestamps carry +05:30).
 - Dates are stored as ISO YYYY-MM-DD and formatted only for display. Typed dates are accepted as DD/MMM/YYYY, DD/MM/YYYY or ISO.
+
+## 13. Start over and the Data tab (added after Task 12)
+- "Data and password" is the last main tab (after Daily Updates). It holds export, the Export Template, import, password change, the AI check and Start over.
+- **Start over** deletes everything in the browser (accounts, entries, budgets, goals and the password check) after the user types `DELETE`. The AI session is destroyed first. The app returns to "Choose a password" and then Setup.
+- The password screen has one password field (more than six characters, so at least 7). Once it is long enough it offers **Unlock** (when a database exists), **Upload new file** (an export encrypted with this password; replaces the database after a warning) and **Start New Database** (asks for the password again, warns, deletes any existing database, then starts Setup). The 7-character minimum also applies to a password change and to an export file password. Wrong passwords on Unlock and Upload wait 1s, 2s, 4s and so on.

@@ -198,6 +198,16 @@ describe('the six tabs', () => {
     expect(within(screen.getByRole('table', { name: 'Assets' })).queryByText('Cash')).toBeNull();
   });
 
+  it('Data and password is the last main tab when the panel is given', () => {
+    const { data } = world([expense]);
+    render(<AppShell data={data} vault={{} as Vault} host={{ prompt: async () => '' }} onChanged={() => {}} dataPanel={<p>panel body</p>} />);
+    const names = within(screen.getByRole('navigation', { name: 'Main tabs' })).getAllByRole('button').map((b) => b.textContent);
+    expect(names).toEqual(['Dashboard', 'Assets', 'Liabilities', 'Goals', 'Budgets', 'Daily Updates', 'Data and password']);
+    expect(screen.getByText('panel body').closest('[hidden]')).not.toBeNull();
+    fireEvent.click(tab('Data and password'));
+    expect(screen.getByText('panel body').closest('[hidden]')).toBeNull();
+  });
+
   it('Budgets: chat sets a budget and the list shows spending against it', async () => {
     const { Harness } = world([budget, expense]);
     render(<Harness />);

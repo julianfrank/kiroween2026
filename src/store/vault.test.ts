@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { delayAfterFailures } from '../crypto/attempts';
 import { decryptValue, deriveKey, encryptValue, randomSalt } from '../crypto/crypto';
 import { MemoryKV } from './kv';
-import { WrongPasswordError, createVault, hasVault, unlockVault } from './vault';
+import { WrongPasswordError, createVault, hasVault, nukeStore, unlockVault } from './vault';
 
 const FAST = 1000; // iterations for tests only
 
@@ -71,5 +71,21 @@ describe('wrong-password delay', () => {
   it('grows 1s, 2s, 4s and is capped', () => {
     expect([0, 1, 2, 3, 4].map((n) => delayAfterFailures(n))).toEqual([0, 1000, 2000, 4000, 8000]);
     expect(delayAfterFailures(20)).toBe(30_000);
+  });
+});
+
+describe('start over', () => {
+  it('deletes every item and the password check, so a new password and empty books can begin', async () => {
+    const kv = new MemoryKV();
+    const v = await createVault(kv, 'old', FAST);
+    await v.putJson('acct:7f3a', { name: 'Loan - Tom' });
+    await v.putJson('txn:2026-11-22:0001', { note: 'x' });
+    await nukeStore(kv);
+    expect(kv.data.size).toBe(0);
+    expect(await hasVault(kv)).toBe(false);
+    await expect(unlockVault(kv, 'old')).rejects.toThrow();
+    const fresh = await createVault(kv, 'new', FAST);
+    expect(await fresh.keys()).toEqual([]);
+    await expect(unlockVault(kv, 'new')).resolves.toBeTruthy();
   });
 });

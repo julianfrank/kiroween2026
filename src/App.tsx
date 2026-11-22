@@ -8,7 +8,7 @@ import {
 } from './ai/readiness';
 import { IndexedDbKV } from './store/kv';
 import { emptyTargets, loadAll, saveSetup, type LoadedData } from './store/repo';
-import { nukeStore, type Vault } from './store/vault';
+import { createVault, nukeStore, type Vault } from './store/vault';
 import { AppShell } from './ui/AppShell';
 import { DataPanel } from './ui/DataPanel';
 import { PasswordScreen } from './ui/PasswordScreen';
@@ -64,10 +64,22 @@ export function App() {
     void host.renew().catch(() => setState({ step: 'error', message: 'The AI could not restart.' }));
   };
 
+  // Start New Database from the password screen: same as start over, then create the empty store.
+  const onStartNew = async (password: string) => {
+    host.destroy();
+    await nukeStore(kv);
+    const v = await createVault(kv, password);
+    delete document.documentElement.dataset.theme;
+    setData(null);
+    setVault(v);
+    setEpoch((e) => e + 1);
+    void host.renew().catch(() => setState({ step: 'error', message: 'The AI could not restart.' }));
+  };
+
   if (state.step !== 'ready') {
     return <Readiness state={state} onStart={() => void readiness.start()} />;
   }
-  if (!vault) return <PasswordScreen kv={kv} onUnlocked={setVault} onBeforeReplace={onBeforeReplace} onImported={onImported} onNuke={onNuke} />;
+  if (!vault) return <PasswordScreen kv={kv} onUnlocked={setVault} onBeforeReplace={onBeforeReplace} onImported={onImported} onStartNew={onStartNew} />;
   if (!data) return <main style={{ padding: 24 }}>Loading…</main>;
 
   if (data.accounts.size === 0) {

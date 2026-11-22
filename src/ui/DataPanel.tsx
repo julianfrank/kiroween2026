@@ -11,6 +11,7 @@ import {
 } from '../export/format';
 import { TEMPLATE_FILE_NAME, buildTemplate } from '../export/template';
 import { ImportError } from '../export/validate';
+import { passwordProblem } from '../crypto/password';
 import type { PromptHost } from '../chat/proposal';
 import { GoldenCheck } from './GoldenCheck';
 import type { KV } from '../store/kv';
@@ -185,7 +186,7 @@ export function DataPanel({  kv,
   async function doExport() {
     setExportMsg('');
     if (mode === 'new' && filePw !== filePw2) return setExportMsg('The two file passwords do not match.');
-    if (mode === 'new' && filePw === '') return setExportMsg('Choose a password for the file.');
+    if (mode === 'new' && passwordProblem(filePw)) return setExportMsg(`File password: ${passwordProblem(filePw)}`);
     setBusy(true);
     try {
       const env = mode === 'current' ? await exportWithCurrentPassword(kv, vault) : await exportWithNewPassword(vault, filePw);
@@ -206,7 +207,7 @@ export function DataPanel({  kv,
     e.preventDefault();
     setPwMsg('');
     if (next !== next2) return setPwMsg('The two new passwords do not match.');
-    if (next === '') return setPwMsg('Choose a new password.');
+    if (passwordProblem(next)) return setPwMsg(`New password: ${passwordProblem(next)}`);
     setBusy(true);
     try {
       const v = await changePassword(kv, current, next);

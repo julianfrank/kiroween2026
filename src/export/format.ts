@@ -11,6 +11,7 @@ import {
   randomSalt,
   toBase64,
 } from '../crypto/crypto';
+import { passwordProblem } from '../crypto/password';
 import { istTimestamp } from '../dates/dates';
 import type { KV } from '../store/kv';
 import type { LoadedData } from '../store/repo';
@@ -57,7 +58,8 @@ export async function exportWithNewPassword(
   now = new Date(),
   iterations = DEFAULT_ITERATIONS,
 ): Promise<ExportEnvelope> {
-  if (password.length === 0) throw new Error('Choose a password for the file.');
+  const tooShort = passwordProblem(password);
+  if (tooShort) throw new Error(tooShort);
   const salt = randomSalt();
   const key = await deriveKey(password, salt, iterations);
   const items: Array<[string, string]> = [[META_VERIFIER, await encryptValue(key, VERIFIER_TEXT)]];

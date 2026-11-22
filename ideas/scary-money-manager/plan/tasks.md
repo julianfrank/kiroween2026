@@ -17,3 +17,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done. Update this fil
 
 ## Order and dependencies
 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12. Tasks 9 and 10 can be swapped. Task 2's result may change how the file is opened (see `docs/adr/0004-single-file-build.md`).
+
+## After the plan
+- [x] **Start over and the Data tab** (user request after Task 12). `nukeStore` in `src/store/vault.ts`, `NukeForm` in `src/ui/DataPanel.tsx` (Data tab and password screen), `onNuke` in `src/App.tsx`; "Data and password" moved from a header button to the last main tab. 5 new unit tests; the end-to-end test now also starts over from both places.
+- [x] **One password screen** (user request). `PasswordScreen` rewritten: one field, 7+ characters, then Unlock, Upload new file, Start New Database (nukes any existing database). 6 new unit tests; end-to-end test updated.

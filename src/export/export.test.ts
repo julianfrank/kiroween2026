@@ -217,18 +217,27 @@ describe('password change', () => {
   it('needs the current password, re-encrypts everything, and keeps the data', async () => {
     const s = await store('old-pw');
     const before = snapshot(s.kv);
-    await expect(changePassword(s.kv, 'wrong', 'new-pw', IT)).rejects.toBeInstanceOf(WrongPasswordError);
+    await expect(changePassword(s.kv, 'wrong', 'new-password', IT)).rejects.toBeInstanceOf(WrongPasswordError);
     expect(snapshot(s.kv)).toBe(before);
 
-    const v = await changePassword(s.kv, 'old-pw', 'new-pw', IT);
+    const v = await changePassword(s.kv, 'old-pw', 'new-password', IT);
     expect(s.kv.data.get('meta:salt')).not.toBe(JSON.parse(before).find(([k]: [string]) => k === 'meta:salt')[1]);
     await expect(unlockVault(s.kv, 'old-pw')).rejects.toBeInstanceOf(WrongPasswordError);
-    const again = await loadAll(await unlockVault(s.kv, 'new-pw'));
+    const again = await loadAll(await unlockVault(s.kv, 'new-password'));
     expect(again.ledger.netWorth()).toBe(s.data.ledger.netWorth());
     expect((await loadAll(v)).accounts.size).toBe(s.data.accounts.size);
     // every value changed ciphertext
     const old = new Map<string, string>(JSON.parse(before));
     for (const [k, val] of s.kv.data) if (k.startsWith('acct:')) expect(val).not.toBe(old.get(k));
+  });
+});
+
+describe('password rule', () => {
+  it('new passwords need more than six characters, for the file and for a password change', async () => {
+    const s = await store('old-pw');
+    await expect(exportWithNewPassword(s.vault, 'sixsix', NOW, IT)).rejects.toThrow('at least 7');
+    await expect(changePassword(s.kv, 'old-pw', 'sixsix', IT)).rejects.toThrow('at least 7');
+    await expect(changePassword(s.kv, 'old-pw', 'seven77', IT)).resolves.toBeTruthy();
   });
 });
 

@@ -13,9 +13,9 @@ import { ChatPanel, type Incoming } from './ChatPanel';
 import { Dashboard } from './Dashboard';
 import { AccountList, BudgetsList, DailyList, GoalsList } from './lists';
 
-type TabId = 'dashboard' | ChatTabId;
-const ORDER: TabId[] = ['dashboard', 'assets', 'liabilities', 'goals', 'budgets', 'daily'];
-const LABEL = (t: TabId) => (t === 'dashboard' ? 'Dashboard' : TAB_LABELS[t]);
+type TabId = 'dashboard' | ChatTabId | 'data';
+const ORDER: TabId[] = ['dashboard', 'assets', 'liabilities', 'goals', 'budgets', 'daily', 'data'];
+const LABEL = (t: TabId) => (t === 'dashboard' ? 'Dashboard' : t === 'data' ? 'Data and password' : TAB_LABELS[t]);
 
 export function AppShell({
   data,
@@ -28,13 +28,12 @@ export function AppShell({
   vault: Vault;
   host: PromptHost;
   onChanged: () => void;
-  /** Export, import and password change, shown from the header. */
+  /** Export, import, password change and start-over, shown as the last tab. */
   dataPanel?: ReactNode;
 }) {
   const [tab, setTab] = useState<TabId>('dashboard');
   const [incoming, setIncoming] = useState<Partial<Record<ChatTabId, Incoming>>>({});
   const [event, setEvent] = useState<EntryEvent | null>(null);
-  const [showData, setShowData] = useState(false);
   const clearEvent = useCallback(() => setEvent(null), []);
   const onEntry = (e: Entry) => {
     const ev = eventFromEntry(e, data.accounts);
@@ -74,15 +73,9 @@ export function AppShell({
         <span className="state-chip" role="status" data-state={state}>
           {STATE_TEXT[state].title}: {STATE_TEXT[state].line}
         </span>
-        {dataPanel && (
-          <button aria-expanded={showData} onClick={() => setShowData((s) => !s)} style={{ marginLeft: 'auto' }}>
-            Data and password
-          </button>
-        )}
       </header>
-      {dataPanel && showData && dataPanel}
       <nav aria-label="Main tabs" style={{ margin: '12px 0' }}>
-        {ORDER.map((t) => (
+        {ORDER.filter((t) => t !== 'data' || dataPanel).map((t) => (
           <button
             key={t}
             aria-current={t === tab ? 'page' : undefined}
@@ -98,6 +91,13 @@ export function AppShell({
         <h2>Dashboard</h2>
         <Dashboard data={data} />
       </div>
+
+      {dataPanel && (
+        <div hidden={tab !== 'data'}>
+          <h2>Data and password</h2>
+          {dataPanel}
+        </div>
+      )}
 
       {CHAT_TABS.map((t) => (
         <div key={t} hidden={t !== tab}>

@@ -106,15 +106,15 @@ describe('Data and password panel', () => {
     const s = await store('pw', 'Cash');
     const { onPasswordChanged } = panel(s);
     fireEvent.change(screen.getByLabelText('Current password'), { target: { value: 'nope' } });
-    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'next' } });
-    fireEvent.change(screen.getByLabelText('Repeat new password'), { target: { value: 'next' } });
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'next-pass' } });
+    fireEvent.change(screen.getByLabelText('Repeat new password'), { target: { value: 'next-pass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
     expect(await screen.findByText('Your current password is wrong. Nothing was changed.')).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Current password'), { target: { value: 'pw' } });
     fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
     await waitFor(() => expect(onPasswordChanged).toHaveBeenCalledOnce(), { timeout: 5000 });
-    await expect(unlockVault(s.kv, 'next')).resolves.toBeTruthy();
+    await expect(unlockVault(s.kv, 'next-pass')).resolves.toBeTruthy();
   });
 });
 
