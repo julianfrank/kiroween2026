@@ -12,7 +12,7 @@ Sources: [Official Rules](https://kiroween.devpost.com/rules) and the [Overview]
 | URL to a working app | Live at https://julianfrank.github.io/kiroween2026/ | Also add it as the repo's Website in About |
 | All source, assets and instructions needed to run it | `README.md` has build and run steps | Nothing |
 | New project, built in the Submission Period (30 Oct to 4 Dec 2026) | First commit 22/Nov/2026 | Nothing |
-| Demo video under 3 minutes, public on YouTube, no copyrighted music or third-party trademarks without permission | Not made yet | See section 13 |
+| Demo video under 3 minutes, public on YouTube, no copyrighted music or third-party trademarks without permission | **Done**: https://youtu.be/ZyYEkYlSjp0 (also linked in the README) | Check it is public and under 3:00 |
 | Eligibility | India is not on the excluded list | Nothing |
 
 **Judging risk (decided: keep the AI required).** The app only opens after Chrome's on-device model is ready, so a judge without Gemini Nano (or on Edge, Safari or a phone) stops at the loader. The testing instructions (section 6) state the hardware clearly, and the video (section 13) must show the whole app working, because judges may judge from the video and text alone.

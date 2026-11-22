@@ -2,7 +2,11 @@
 
 ### Your money, your device, your ghost. A private money manager in **one HTML file**, where Chrome's **on-device AI** keeps real double-entry books from plain words, and the whole app gets spookier as your net worth sinks.
 
-**▶ Live app:** https://julianfrank.github.io/kiroween2026/ &nbsp;·&nbsp; Built for **Kiroween 2026** with [Kiro](https://kiro.dev) &nbsp;·&nbsp; [MIT licence](LICENSE)
+**▶ Live app:** https://julianfrank.github.io/kiroween2026/ &nbsp;·&nbsp; **🎬 Demo video:** https://youtu.be/ZyYEkYlSjp0 &nbsp;·&nbsp; Built for **Kiroween 2026** with [Kiro](https://kiro.dev) &nbsp;·&nbsp; [MIT licence](LICENSE)
+
+[![Watch the demo video on YouTube](https://img.youtube.com/vi/ZyYEkYlSjp0/maxresdefault.jpg)](https://youtu.be/ZyYEkYlSjp0 "Scary Money Manager: demo video")
+
+*Watch the demo: the app working end to end, from waking the on-device AI to the lights going out.*
 
 ![Lights out: a ₹10 lakh hospital bill takes net worth below zero, coins fly from HDFC Bank to Other Expense, and the whole app turns dark](ideas/scary-money-manager/design/shots/lights-out.gif)
 
