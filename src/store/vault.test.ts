@@ -34,11 +34,11 @@ describe('vault', () => {
     const kv = new MemoryKV();
     expect(await hasVault(kv)).toBe(false);
     const v = await createVault(kv, 'Pass#1', FAST);
-    await v.putJson('acct:7f3a', { name: 'Loan - Tom', paise: 500000 });
+    await v.putJson('acct:7f3a', { name: 'Loan - Tom', Rupees: 500000 });
     expect(await hasVault(kv)).toBe(true);
 
     const again = await unlockVault(kv, 'Pass#1');
-    expect(await again.getJson('acct:7f3a')).toEqual({ name: 'Loan - Tom', paise: 500000 });
+    expect(await again.getJson('acct:7f3a')).toEqual({ name: 'Loan - Tom', Rupees: 500000 });
     expect(await again.keys()).toEqual(['acct:7f3a']);
   });
 
@@ -51,12 +51,12 @@ describe('vault', () => {
   it('keeps no plaintext in stored keys or values', async () => {
     const kv = new MemoryKV();
     const v = await createVault(kv, 'right', FAST);
-    await v.putJson('acct:7f3a', { name: 'Loan from Tom', paise: 123456789 });
+    await v.putJson('acct:7f3a', { name: 'Loan from Tom', Rupees: 123456789 });
     const everything = [...kv.data.entries()].flat().join('\n');
     expect(everything).not.toContain('Tom');
     expect(everything).not.toContain('123456789');
     expect(everything).not.toContain('Kiroween2026');
-    expect(kv.data.get('meta:version')).toBe('1');
+    expect(kv.data.get('meta:version')).toBe('2');
   });
 
   it('refuses to create over an existing store and to write meta keys', async () => {

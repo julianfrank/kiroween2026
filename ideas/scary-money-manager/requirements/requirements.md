@@ -19,7 +19,7 @@ A single HTML file for Chrome. It uses Chrome's built-in Prompt API (Gemini Nano
 - Keys stay in plain text and values are encrypted, in both IndexedDB and the Export File. Keys are opaque IDs. Fixed readable keys: `meta:verifier`, `meta:salt`, `meta:version`. [Q3]
 - PBKDF2-SHA256 (about 600,000 iterations) and AES-256-GCM with a random IV per value. [Q4]
 - The Session ends only when the tab closes (no idle timer). The user can change the password during a Session, or export with a different password. [Q17]
-- Money is INR only, stored as integer paise, and shown with lakh/crore grouping (₹1,20,000). [Q10]
+- Money is INR only, in **whole rupees** (integers, no paise or decimals anywhere), shown with lakh/crore grouping (₹1,20,000). Typed amounts such as `5000.50` are rejected. [Q10, revised in Task 6 feedback]
 
 ## 5. AI behaviour
 - One global AI session. It is destroyed with `session.destroy()` on tab close and on import, and recreated with a fresh system prompt when `contextUsage` nears `contextWindow`. After destroy, `prompt()` must reject. [Q9, Q13]
@@ -57,3 +57,8 @@ Vitest unit tests (crypto, ledger, rules, dates, chart builders, theme mapping, 
 
 ## 11. Out of scope
 Multi-currency, live exchange rates, weekly/quarterly budgets, budget carry-over, multiple profiles, merge-on-import, idle auto-lock, `prefers-reduced-motion` handling, and editing or deleting Entries.
+
+## 12. Dates and time zone (added in Task 6 feedback)
+- Every date shown on screen is DD/MMM/YYYY (for example 22/Nov/2026).
+- All dates are Indian Standard Time (Asia/Kolkata). "Today" is the IST date, whatever the computer's time zone is. Entry dates, as-of dates and export timestamps are IST (timestamps carry +05:30).
+- Dates are stored as ISO YYYY-MM-DD and formatted only for display. Typed dates are accepted as DD/MMM/YYYY, DD/MM/YYYY or ISO.

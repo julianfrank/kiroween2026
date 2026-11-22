@@ -7,14 +7,14 @@ The app exports one JSON file and offers this template as a separate download. D
 - Keys never contain names or amounts: `acct:<id>`, `txn:<YYYY-MM-DD>:<seq>`, `budget:<id>`, `goal:<id>`.
 - Encryption: PBKDF2-SHA256 with `kdf.iterations` and `kdf.salt`, producing an AES-256-GCM key. Each value has its own random 12-byte IV.
 - `meta:verifier` decrypts to the literal text `Kiroween2026`. If decryption fails, the password is wrong.
-- Amounts inside decrypted values are integer **paise** (₹1 = 100). Dates are `YYYY-MM-DD`.
+- Amounts inside decrypted values are whole **rupees** (integers, no paise). Dates are `YYYY-MM-DD` calendar dates in Indian Standard Time (IST). The app shows them as `DD/MMM/YYYY`.
 
 ## Envelope
 ```json
 {
   "format": "scary-money-manager-export",
   "version": 1,
-  "exportedAt": "2026-11-22T10:00:00Z",
+  "exportedAt": "2026-11-22T15:30:00+05:30",
   "kdf": { "name": "PBKDF2-SHA256", "iterations": 600000, "salt": "<base64, 16 bytes>" },
   "cipher": "AES-256-GCM",
   "items": {
@@ -33,12 +33,10 @@ The app exports one JSON file and offers this template as a separate download. D
   "name": "Loan - Tom",
   "kind": "liability",
   "category": null,
-  "asOfDate": "2026-10-31",
-  "openingPaise": 0,
-  "createdAt": "2026-10-31T09:00:00Z"
+  "asOfDate": "2026-10-31"
 }
 ```
-`kind`: `asset | liability | equity | income | expense`. `category` is optional: `savings | investment` for assets that Goals may attach to.
+`kind`: `asset | liability | equity | income | expense`. `category` is optional: `savings | investment` for assets that Goals may attach to. `system` is optional: `opening-equity | valuation-gain | valuation-loss` marks accounts the app must find later. Opening balances are not stored on the account. They are `opening` entries in the ledger (changed in Task 6).
 
 ### `txn:*`
 ```json
@@ -46,8 +44,8 @@ The app exports one JSON file and offers this template as a separate download. D
   "date": "2026-10-31",
   "note": "Borrowed Rs.5000 from Tom; cash received",
   "lines": [
-    { "account": "acct:1a2b", "debitPaise": 500000, "creditPaise": 0 },
-    { "account": "acct:7f3a", "debitPaise": 0, "creditPaise": 500000 }
+    { "account": "acct:1a2b", "debitRupees": 5000, "creditRupees": 0 },
+    { "account": "acct:7f3a", "debitRupees": 0, "creditRupees": 5000 }
   ],
   "kind": "normal",
   "reverses": null,
@@ -62,12 +60,12 @@ The app exports one JSON file and offers this template as a separate download. D
 
 ### `budget:*`
 ```json
-{ "name": "Groceries", "monthlyLimitPaise": 1000000, "accounts": ["acct:9c1d"] }
+{ "name": "Groceries", "monthlyLimitRupees": 10000, "accounts": ["acct:9c1d"] }
 ```
 
 ### `goal:*`
 ```json
-{ "name": "Emergency fund", "targetPaise": 30000000, "targetDate": "2027-12-31", "account": "acct:3b4c" }
+{ "name": "Emergency fund", "targetRupees": 300000, "targetDate": "2027-12-31", "account": "acct:3b4c" }
 ```
 
 ## JSON Schema (decrypted file envelope)

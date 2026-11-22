@@ -1,4 +1,4 @@
-import type { Paise } from '../money/money';
+import type { Rupees } from '../money/money';
 
 export type AccountKind = 'asset' | 'liability' | 'equity' | 'income' | 'expense';
 
@@ -11,12 +11,14 @@ export interface Account {
   category?: 'savings' | 'investment' | null;
   /** Date the account's opening balance applies from. */
   asOfDate: string;
+  /** Marks accounts the app itself needs to find later. */
+  system?: 'opening-equity' | 'valuation-gain' | 'valuation-loss';
 }
 
 export interface Line {
   account: string;
-  debitPaise: Paise;
-  creditPaise: Paise;
+  debitRupees: Rupees;
+  creditRupees: Rupees;
 }
 
 export type EntryKind = 'opening' | 'normal' | 'revaluation' | 'reversal' | 'correction';

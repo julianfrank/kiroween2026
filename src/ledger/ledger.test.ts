@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPaise, parseRupees } from '../money/money';
+import { formatRupees, parseRupees } from '../money/money';
 import { isSetupBalanced, setupImbalance, validateEntry } from '../rules/rules';
 import { Ledger, LedgerError } from './ledger';
 import type { Account, Entry } from './types';
@@ -25,31 +25,39 @@ function entry(over: Partial<Entry> = {}): Entry {
     correctionOf: null,
     source: 'ai-confirmed',
     lines: [
-      { account: 'acct:cash', debitPaise: 500000, creditPaise: 0 },
-      { account: 'acct:tom', debitPaise: 0, creditPaise: 500000 },
+      { account: 'acct:cash', debitRupees: 5000, creditRupees: 0 },
+      { account: 'acct:tom', debitRupees: 0, creditRupees: 5000 },
     ],
     ...over,
   };
 }
 
 describe('money', () => {
-  it('parses common amount formats into paise', () => {
-    expect(parseRupees('Rs.5000')).toBe(500000);
-    expect(parseRupees('₹ 5,000')).toBe(500000);
-    expect(parseRupees('1,20,000.50')).toBe(12000050);
-    expect(parseRupees('5k')).toBe(500000);
-    expect(parseRupees('1.2L')).toBe(12000000);
-    expect(parseRupees('1.5 cr')).toBe(1500000000);
+  it('parses common amount formats into Rupees', () => {
+    expect(parseRupees('Rs.5000')).toBe(5000);
+    expect(parseRupees('₹ 5,000')).toBe(5000);
+    expect(parseRupees('1,20,000')).toBe(120000);
+    expect(parseRupees('5k')).toBe(5000);
+    expect(parseRupees('1.2L')).toBe(120000);
+    expect(parseRupees('1.25k')).toBe(1250);
+    expect(parseRupees('1.5 cr')).toBe(15000000);
     expect(parseRupees('abc')).toBeNull();
     expect(parseRupees('-5')).toBeNull();
     expect(parseRupees('0')).toBeNull();
   });
 
-  it('formats with lakh/crore grouping', () => {
-    expect(formatPaise(12000000)).toBe('₹1,20,000');
-    expect(formatPaise(1500000000)).toBe('₹1,50,00,000');
-    expect(formatPaise(12000050)).toBe('₹1,20,000.50');
-    expect(formatPaise(-150000)).toBe('-₹1,500');
+  it('rejects paise: plain decimals and fractions of a rupee', () => {
+    expect(parseRupees('5000.50')).toBeNull();
+    expect(parseRupees('1,20,000.50')).toBeNull();
+    expect(parseRupees('0.001k')).toBeNull();
+    expect(parseRupees('1.234L')).toBeNull(); // more than two decimals is not a number we accept
+  });
+
+  it('formats whole rupees with lakh/crore grouping and no decimals', () => {
+    expect(formatRupees(120000)).toBe('₹1,20,000');
+    expect(formatRupees(15000000)).toBe('₹1,50,00,000');
+    expect(formatRupees(-1500)).toBe('-₹1,500');
+    expect(formatRupees(0)).toBe('₹0');
   });
 });
 
@@ -62,7 +70,7 @@ describe('rules', () => {
     const bad = entry({
       date: '2026-02-30',
       note: ' ',
-      lines: [{ account: 'acct:nope', debitPaise: 100, creditPaise: 0 }],
+      lines: [{ account: 'acct:nope', debitRupees: 100, creditRupees: 0 }],
     });
     const problems = validateEntry(bad, accounts).join('|');
     expect(problems).toContain('Invalid date');
@@ -72,21 +80,21 @@ describe('rules', () => {
     expect(problems).toContain('Debits (100) must equal credits (0)');
   });
 
-  it('rejects a line with both debit and credit, and fractional paise', () => {
+  it('rejects a line with both debit and credit, and fractional rupees', () => {
     const e = entry({
       lines: [
-        { account: 'acct:cash', debitPaise: 100, creditPaise: 100 },
-        { account: 'acct:tom', debitPaise: 0.5, creditPaise: 0 },
+        { account: 'acct:cash', debitRupees: 100, creditRupees: 100 },
+        { account: 'acct:tom', debitRupees: 0.5, creditRupees: 0 },
       ],
     });
     expect(validateEntry(e, accounts).length).toBeGreaterThan(0);
   });
 
   it('setup balances only when Assets = Liabilities + Opening Equity', () => {
-    const t = { assets: 5000000, liabilities: 1000000, equity: 3000000 };
-    expect(setupImbalance(t)).toBe(1000000);
+    const t = { assets: 50000, liabilities: 10000, equity: 30000 };
+    expect(setupImbalance(t)).toBe(10000);
     expect(isSetupBalanced(t)).toBe(false);
-    expect(isSetupBalanced({ ...t, equity: 4000000 })).toBe(true);
+    expect(isSetupBalanced({ ...t, equity: 40000 })).toBe(true);
   });
 });
 
@@ -95,15 +103,15 @@ describe('ledger', () => {
     const l = new Ledger(accounts);
     expect(l.append(entry())).toBe('txn:2026-11-22:0001');
     expect(l.append(entry({ note: 'second' }))).toBe('txn:2026-11-22:0002');
-    expect(l.balance('acct:cash')).toBe(1000000);
-    expect(l.balance('acct:tom')).toBe(1000000);
+    expect(l.balance('acct:cash')).toBe(10000);
+    expect(l.balance('acct:tom')).toBe(10000);
     expect(l.netWorth()).toBe(0);
     expect(l.balance('acct:cash', '2026-11-21')).toBe(0);
   });
 
   it('refuses an unbalanced entry and leaves the ledger unchanged', () => {
     const l = new Ledger(accounts);
-    const bad = entry({ lines: [entry().lines[0], { account: 'acct:tom', debitPaise: 0, creditPaise: 1 }] });
+    const bad = entry({ lines: [entry().lines[0], { account: 'acct:tom', debitRupees: 0, creditRupees: 1 }] });
     expect(() => l.append(bad)).toThrow(LedgerError);
     expect(l.entries.size).toBe(0);
   });
@@ -139,20 +147,20 @@ describe('ledger', () => {
     const l = new Ledger(accounts);
     const key = l.append(entry());
     const fixed = [
-      { account: 'acct:cash', debitPaise: 600000, creditPaise: 0 },
-      { account: 'acct:tom', debitPaise: 0, creditPaise: 600000 },
+      { account: 'acct:cash', debitRupees: 6000, creditRupees: 0 },
+      { account: 'acct:tom', debitRupees: 0, creditRupees: 6000 },
     ];
     const { reversal, correction } = l.correct(key, '2026-11-23', 'typed 5000, was 6000', fixed, 'Borrowed Rs.6000 from Tom');
     expect(l.entries.get(reversal)!.reverses).toBe(key);
     expect(l.entries.get(correction)!.correctionOf).toBe(key);
-    expect(l.balance('acct:cash')).toBe(600000);
-    expect(l.balance('acct:tom')).toBe(600000);
+    expect(l.balance('acct:cash')).toBe(6000);
+    expect(l.balance('acct:tom')).toBe(6000);
   });
 
   it('an invalid correction leaves the books as they were', () => {
     const l = new Ledger(accounts);
     const key = l.append(entry());
-    const bad = [{ account: 'acct:cash', debitPaise: 1, creditPaise: 0 }];
+    const bad = [{ account: 'acct:cash', debitRupees: 1, creditRupees: 0 }];
     expect(() => l.correct(key, '2026-11-23', 'x', bad, 'bad')).toThrow(LedgerError);
     expect(l.isReversed(key)).toBe(false);
     expect(l.entries.size).toBe(1);
@@ -163,18 +171,18 @@ describe('ledger', () => {
     l.append(entry({
       note: 'Salary received', kind: 'normal',
       lines: [
-        { account: 'acct:cash', debitPaise: 5000000, creditPaise: 0 },
-        { account: 'acct:salary', debitPaise: 0, creditPaise: 5000000 },
+        { account: 'acct:cash', debitRupees: 50000, creditRupees: 0 },
+        { account: 'acct:salary', debitRupees: 0, creditRupees: 50000 },
       ],
     }));
     l.append(entry({
       note: 'Groceries', lines: [
-        { account: 'acct:food', debitPaise: 80000, creditPaise: 0 },
-        { account: 'acct:cash', debitPaise: 0, creditPaise: 80000 },
+        { account: 'acct:food', debitRupees: 800, creditRupees: 0 },
+        { account: 'acct:cash', debitRupees: 0, creditRupees: 800 },
       ],
     }));
-    expect(l.balance('acct:cash')).toBe(4920000);
-    expect(l.balance('acct:food')).toBe(80000);
-    expect(l.netWorth()).toBe(4920000);
+    expect(l.balance('acct:cash')).toBe(49200);
+    expect(l.balance('acct:food')).toBe(800);
+    expect(l.netWorth()).toBe(49200);
   });
 });

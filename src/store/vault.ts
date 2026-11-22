@@ -15,7 +15,8 @@ export const META_SALT = 'meta:salt';
 export const META_VERIFIER = 'meta:verifier';
 export const META_VERSION = 'meta:version';
 export const META_ITERATIONS = 'meta:iterations';
-export const STORE_VERSION = '1';
+// Version 2: amounts are whole rupees and dates are IST (version 1 used paise in test builds).
+export const STORE_VERSION = '2';
 
 export class WrongPasswordError extends Error {
   constructor() {
@@ -47,6 +48,11 @@ export class Vault {
     return (await this.kv.keys()).filter((k) => !k.startsWith('meta:'));
   }
 
+  /** Remove every data item, keeping the meta keys (used before a fresh setup and by import). */
+  async clearData(): Promise<void> {
+    for (const k of await this.keys()) await this.kv.delete(k);
+  }
+
   private assertDataKey(key: string) {
     if (key.startsWith('meta:')) throw new Error('meta keys are managed by the vault');
   }
@@ -74,6 +80,12 @@ export async function createVault(
 
 /** Later runs: check the password against the verifier. Throws WrongPasswordError. */
 export async function unlockVault(kv: KV, password: string): Promise<Vault> {
+  const version = await kv.get(META_VERSION);
+  if (version !== STORE_VERSION) {
+    throw new Error(
+      'This store was made by an older test build. In Chrome DevTools > Application > IndexedDB, delete the "scary-money-manager" database and reload.',
+    );
+  }
   const [saltB64, iterStr, verifier] = await Promise.all([
     kv.get(META_SALT),
     kv.get(META_ITERATIONS),

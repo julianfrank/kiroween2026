@@ -26,8 +26,8 @@ flowchart LR
 |---|---|
 | `crypto/` | PBKDF2 key derivation, AES-GCM encrypt and decrypt of one value, verifier check, wrong-password delay |
 | `store/` | IndexedDB wrapper. Reads and writes `key → encrypted value`. Opaque ID generation. Atomic re-encrypt for password change |
-| `money/` | Integer paise type, parse (`Rs.5000`, `5,000`, `50k`), lakh/crore formatting |
-| `dates/` | Resolver for date phrases (today, yesterday, N days ago, last Friday, ISO dates). Pure functions with an injected "today" |
+| `money/` | Whole-rupee type, parse (`Rs.5000`, `5,000`, `50k`, `1.2L`, no paise), lakh/crore formatting |
+| `dates/` | IST today, `DD/MMM/YYYY` formatting and parsing, resolver for date phrases (today, yesterday, N days ago, last Friday, ISO dates). Pure functions with an injected "today" |
 | `ledger/` | Entry types, append, Reversal and Correction builders, balances by Account and date |
 | `rules/` | Balance gate for Setup, Entry validators (debits = credits, Accounts exist, date sane), future-date flag |
 | `ai/` | Availability and download state machine, session create and destroy, schema-constrained proposals, retry-once logic, per-tab prompts, context rebuild |
@@ -50,7 +50,7 @@ Derived, not stored: balances, Net Worth, budget progress, goal progress, chart 
 - **Test step:** a short fixed prompt whose reply must contain an expected token.
 - **Proposal schema** (passed as `responseConstraint`):
   - `intent`: one of the tab's allowed intents or `other_tab` with `tab`
-  - `amountRupees`: number (converted to paise by the app, never trusted for balancing)
+  - `amountRupees`: whole rupees (the app rejects decimals and never trusts the model for balancing)
   - `dateText`: string
   - `fromAccount`, `toAccount`: names, or `new` with `{name, kind}`
   - `note`: short sentence

@@ -1,4 +1,4 @@
-import type { Paise } from '../money/money';
+import type { Rupees } from '../money/money';
 import type { Account, Entry } from '../ledger/types';
 
 /** Rules Engine: pure checks. Return a list of problems; empty means valid. */
@@ -20,14 +20,14 @@ export function validateEntry(entry: Entry, accounts: ReadonlyMap<string, Accoun
   for (const line of entry.lines) {
     if (!accounts.has(line.account)) problems.push(`Unknown account ${line.account}`);
     const okAmount = (n: number) => Number.isSafeInteger(n) && n >= 0;
-    if (!okAmount(line.debitPaise) || !okAmount(line.creditPaise)) {
-      problems.push('Amounts must be whole paise, not negative');
+    if (!okAmount(line.debitRupees) || !okAmount(line.creditRupees)) {
+      problems.push('Amounts must be whole Rupees, not negative');
       continue;
     }
-    const sides = Number(line.debitPaise > 0) + Number(line.creditPaise > 0);
+    const sides = Number(line.debitRupees > 0) + Number(line.creditRupees > 0);
     if (sides !== 1) problems.push('Each line must have exactly one of debit or credit');
-    debits += line.debitPaise;
-    credits += line.creditPaise;
+    debits += line.debitRupees;
+    credits += line.creditRupees;
   }
   if (debits !== credits) problems.push(`Debits (${debits}) must equal credits (${credits})`);
   if (debits === 0) problems.push('Entry total must be above zero');
@@ -41,13 +41,13 @@ export function validateEntry(entry: Entry, accounts: ReadonlyMap<string, Accoun
 
 /** Setup gate: Assets = Liabilities + Opening Equity. Positive imbalance means assets are too high. */
 export function setupImbalance(totals: {
-  assets: Paise;
-  liabilities: Paise;
-  equity: Paise;
-}): Paise {
+  assets: Rupees;
+  liabilities: Rupees;
+  equity: Rupees;
+}): Rupees {
   return totals.assets - (totals.liabilities + totals.equity);
 }
 
-export function isSetupBalanced(totals: { assets: Paise; liabilities: Paise; equity: Paise }): boolean {
+export function isSetupBalanced(totals: { assets: Rupees; liabilities: Rupees; equity: Rupees }): boolean {
   return setupImbalance(totals) === 0;
 }

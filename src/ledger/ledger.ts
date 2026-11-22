@@ -1,4 +1,4 @@
-import type { Paise } from '../money/money';
+import type { Rupees } from '../money/money';
 import { validateEntry } from '../rules/rules';
 import { DEBIT_NORMAL, type Account, type Entry, type Line } from './types';
 
@@ -55,8 +55,8 @@ export class Ledger {
       note: `Reversal of ${key} (${original.note}): ${reason}`,
       lines: original.lines.map((l) => ({
         account: l.account,
-        debitPaise: l.creditPaise,
-        creditPaise: l.debitPaise,
+        debitRupees: l.creditRupees,
+        creditRupees: l.debitRupees,
       })),
       kind: 'reversal',
       reverses: key,
@@ -93,14 +93,14 @@ export class Ledger {
   }
 
   /** Balance of one account on or before `asOf` (inclusive), in its normal direction. */
-  balance(accountKey: string, asOf?: string): Paise {
+  balance(accountKey: string, asOf?: string): Rupees {
     const account = this.accounts.get(accountKey);
     if (!account) throw new Error(`Unknown account ${accountKey}`);
     let sum = 0;
     for (const e of this._entries.values()) {
       if (asOf && e.date > asOf) continue;
       for (const l of e.lines) {
-        if (l.account === accountKey) sum += l.debitPaise - l.creditPaise;
+        if (l.account === accountKey) sum += l.debitRupees - l.creditRupees;
       }
     }
     if (sum === 0) return 0; // avoid -0
@@ -108,7 +108,7 @@ export class Ledger {
   }
 
   /** Total assets minus total liabilities on or before `asOf`. */
-  netWorth(asOf?: string): Paise {
+  netWorth(asOf?: string): Rupees {
     let total = 0;
     for (const a of this.accounts.values()) {
       if (a.kind === 'asset') total += this.balance(a.key, asOf);
