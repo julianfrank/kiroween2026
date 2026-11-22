@@ -49,12 +49,11 @@ Derived, not stored: balances, Net Worth, budget progress, goal progress, chart 
 - **Readiness states:** `checking`, `needs-download` (Start button), `downloading(percent)`, `initializing`, `testing`, `ready`, `unsupported(reason)`. Always call `LanguageModel.availability()` with the same options later used in `create()` and `prompt()`.
 - **Test step:** a short fixed prompt whose reply must contain an expected token.
 - **Proposal schema** (passed as `responseConstraint`):
-  - `intent`: one of the tab's allowed intents or `other_tab` with `tab`
-  - `amountRupees`: whole rupees (the app rejects decimals and never trusts the model for balancing)
-  - `dateText`: string
-  - `fromAccount`, `toAccount`: names, or `new` with `{name, kind}`
-  - `note`: short sentence
-  - `missing`: array of fields the user did not give
+  - `intent`: `income | expense | transfer | borrow | repay | revalue | other`. An intent outside the current tab's scope makes the app offer a switch to that intent's home tab.
+  - `amount`: the amount copied as text exactly as the user wrote it (`"30L"`), `""` when none. The model never converts units: it turned 30L into 3 crore in testing. `src/chat/amounts.ts` reads the amounts in the user's message itself. One amount in the message wins over the model. Several amounts: the model's choice is kept only if it is one of them, else the card asks. For `revalue` it is the new total value.
+  - `date`: the user's date words copied as written, or an empty string
+  - `fromAccount`, `toAccount`: account names or empty strings. Money flows from `fromAccount` (credit) to `toAccount` (debit). The app matches names to existing accounts, or proposes a new account whose kind comes from the intent.
+  - The model does not write the note. The app builds it from the fields and appends what the user said.
 - The app builds the real balanced Entry lines from the proposal. The model never outputs debit and credit amounts.
 - **Prompt context:** system prompt, today's date, the tab's allowed intents, and the list of Account names relevant to the tab. No Ledger history is sent.
 - **Session lifecycle:** one global session. Destroy on import. Rebuild when `contextUsage / contextWindow` passes 0.8. After destroy, any call is expected to reject, and a test asserts this. The tab closing frees everything.

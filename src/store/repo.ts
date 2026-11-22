@@ -24,6 +24,33 @@ export async function saveSetup(
   }
 }
 
+/**
+ * Save one confirmed entry (and any new accounts) encrypted, then add it to the in-memory ledger.
+ * The ledger is only changed after the save succeeded, and new accounts are rolled back on failure.
+ * Returns the entry's key.
+ */
+export async function commitEntry(
+  vault: Vault,
+  data: LoadedData,
+  newAccounts: Account[],
+  entry: Entry,
+): Promise<string> {
+  for (const a of newAccounts) data.accounts.set(a.key, a);
+  try {
+    const key = data.ledger.preview(entry);
+    for (const a of newAccounts) {
+      const { key: _key, ...rest } = a;
+      await vault.putJson(a.key, rest satisfies StoredAccount);
+    }
+    await vault.putJson(key, entry);
+    data.ledger.append(entry);
+    return key;
+  } catch (e) {
+    for (const a of newAccounts) data.accounts.delete(a.key);
+    throw e;
+  }
+}
+
 export async function loadAll(vault: Vault): Promise<LoadedData> {
   const accounts = new Map<string, Account>();
   const entryRows: Array<[string, Entry]> = [];

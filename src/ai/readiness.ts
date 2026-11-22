@@ -10,9 +10,18 @@ export type ReadinessState =
   | { step: 'ready' }
   | { step: 'error'; message: string };
 
+export interface PromptOptions {
+  /** JSON Schema that forces the shape of the reply. */
+  responseConstraint?: object;
+  signal?: AbortSignal;
+}
+
 export interface SessionLike {
-  prompt(input: string): Promise<string>;
+  prompt(input: string, options?: PromptOptions): Promise<string>;
   destroy(): void;
+  /** Tokens used so far and the limit (present in Chrome). */
+  readonly contextUsage?: number;
+  readonly contextWindow?: number;
 }
 
 export interface MonitorLike {
@@ -36,6 +45,11 @@ export const NO_API_REASON =
   'This browser does not provide the built-in AI (Prompt API). Open this file in Google Chrome on Windows, macOS, Linux or a Chromebook Plus.';
 export const UNAVAILABLE_REASON =
   'Chrome reports the on-device model cannot run on this device. It needs about 22 GB of free disk space, and either a GPU with more than 4 GB of VRAM or 16 GB of RAM with 4 CPU cores.';
+
+/** Create a plain session (no download monitoring) for rebuilding after the context fills up. */
+export function createPlainSession(lm: LanguageModelLike): Promise<SessionLike> {
+  return lm.create({ ...MODEL_OPTIONS });
+}
 
 export interface Readiness {
   /** Look at availability and move to needs-download, or run the whole startup if the model is already available. */

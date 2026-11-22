@@ -29,6 +29,13 @@ export class Ledger {
 
   /** Append one entry after the Rules Engine accepts it. Returns its key, e.g. "txn:2026-11-22:0001". */
   append(entry: Entry): string {
+    const key = this.preview(entry);
+    this._entries.set(key, entry);
+    return key;
+  }
+
+  /** Validate an entry and return the key it would get, without storing it (so callers can save first). */
+  preview(entry: Entry): string {
     const problems = validateEntry(entry, this.accounts);
     if (entry.reverses) {
       const target = this._entries.get(entry.reverses);
@@ -37,9 +44,7 @@ export class Ledger {
       else if (this.isReversed(entry.reverses)) problems.push(`${entry.reverses} is already reversed`);
     }
     if (problems.length) throw new LedgerError(problems);
-    const key = this.nextKey(entry.date);
-    this._entries.set(key, entry);
-    return key;
+    return this.nextKey(entry.date);
   }
 
   isReversed(key: string): boolean {
