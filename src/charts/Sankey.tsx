@@ -1,21 +1,22 @@
 import { sankey, sankeyLeft, sankeyLinkHorizontal } from 'd3-sankey';
 import { formatRupees } from '../money/money';
 import type { NodeKind, SankeyData } from './data';
+import { C } from './palette';
 
 export const KIND_COLOR: Record<NodeKind, string> = {
-  income: '#2e7d32',
-  valuation: '#7b1fa2',
-  borrowed: '#ef6c00',
-  drawn: '#8d6e63',
-  hub: '#546e7a',
-  expense: '#c62828',
-  saving: '#1565c0',
-  repayment: '#ad1457',
-  kept: '#00838f',
-  budget: '#f9a825',
-  goal: '#00897b',
-  gap: '#d84315',
-  unallocated: '#9e9e9e',
+  income: C.green,
+  valuation: C.purple,
+  borrowed: C.orange,
+  drawn: C.brown,
+  hub: C.slate,
+  expense: C.red,
+  saving: C.blue,
+  repayment: C.pink,
+  kept: C.teal,
+  budget: C.amber,
+  goal: C.teal2,
+  gap: C.deepOrange,
+  unallocated: C.grey,
 };
 
 const W = 520;
@@ -53,7 +54,7 @@ export function SankeyChart({ data, title }: { data: SankeyData; title: string }
           const t = l.target as unknown as { name: string; kind: NodeKind };
           const color = KIND_COLOR[s.kind === 'hub' ? t.kind : s.kind];
           return (
-            <path key={i} d={path(l) ?? ''} stroke={color} strokeOpacity={0.35} strokeWidth={Math.max(1, l.width ?? 1)}>
+            <path key={i} className="flow-link" d={path(l) ?? ''} style={{ stroke: color }} strokeOpacity={0.4} strokeWidth={Math.max(1, l.width ?? 1)}>
               <title>{`${s.name} → ${t.name}: ${formatRupees(l.value)}`}</title>
             </path>
           );
@@ -68,7 +69,7 @@ export function SankeyChart({ data, title }: { data: SankeyData; title: string }
           const left = x0 < W / 2;
           return (
             <g key={n.id}>
-              <rect x={x0} y={y0} width={x1 - x0} height={Math.max(1, y1 - y0)} fill={KIND_COLOR[n.kind]}>
+              <rect x={x0} y={y0} width={x1 - x0} height={Math.max(1, y1 - y0)} style={{ fill: KIND_COLOR[n.kind] }}>
                 <title>{`${n.name}: ${formatRupees(n.value ?? 0)}`}</title>
               </rect>
               <text

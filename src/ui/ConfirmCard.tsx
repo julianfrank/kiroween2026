@@ -53,7 +53,7 @@ export function ConfirmCard({
   const intents = draft.intent && !base.includes(draft.intent) ? [...base, draft.intent] : base;
 
   return (
-    <div style={{ border: '2px solid #888', borderRadius: 8, padding: 12, margin: '8px 0' }}>
+    <div style={{ border: '2px solid var(--border)', borderRadius: 8, padding: 12, margin: '8px 0' }}>
       <strong>{title ?? (result.ok ? 'Please confirm' : 'I need a few details')}</strong>
       {questions.map((q) => (
         <div key={q}>{q}</div>
@@ -145,14 +145,14 @@ export function ConfirmCard({
             </div>
           )}
           {result.warnings.map((w) => (
-            <div key={w} role="status" style={{ color: '#a60' }}>
+            <div key={w} role="status" style={{ color: 'var(--warn)' }}>
               {w}
             </div>
           ))}
         </>
       ) : (
         result.problems.map((p) => (
-          <div key={p.message} role="alert" style={{ color: 'crimson' }}>
+          <div key={p.message} role="alert" style={{ color: 'var(--bad)' }}>
             {p.message}
           </div>
         ))

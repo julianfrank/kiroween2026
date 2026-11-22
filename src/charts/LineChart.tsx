@@ -1,8 +1,9 @@
 import { extent, line, scaleLinear, scalePoint } from 'd3';
 import { formatCompact, formatRupees } from '../money/money';
 import type { TrendData } from './data';
+import { C } from './palette';
 
-const COLORS = ['#2e7d32', '#c62828', '#f9a825', '#7b1fa2', '#1565c0'];
+const COLORS = [C.green, C.red, C.amber, C.purple, C.blue];
 const W = 640;
 const H = 280;
 const M = { top: 12, right: 16, bottom: 28, left: 56 };
@@ -45,7 +46,7 @@ export function LineChart({ data, title }: { data: TrendData; title: string }) {
           ) : null,
         )}
         {data.series.map((s, i) => (
-          <g key={s.name} stroke={COLORS[i % COLORS.length]} fill={COLORS[i % COLORS.length]}>
+          <g key={s.name} style={{ stroke: COLORS[i % COLORS.length], fill: COLORS[i % COLORS.length] }}>
             <path d={path(s.values) ?? ''} fill="none" strokeWidth={2} />
             {s.values.map((v, j) => (
               <circle key={j} cx={x(data.labels[j])} cy={y(v)} r={3}>

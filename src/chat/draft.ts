@@ -68,6 +68,44 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 type Side = { account: Account; isNew: boolean } | { problem: Problem };
 
+const LOAN_WORDS = /\b(loan|mortgage|emi|overdraft|credit\s*card)\b/i;
+
+
+/** An existing asset, income or expense account that is named like a loan was created by mistake. */
+function looksLikeLoan(a: Account): boolean {
+  return a.kind !== 'liability' && !a.system && LOAN_WORDS.test(a.name);
+}
+
+function loanLikeAccountProblem(a: Account): Problem {
+  return {
+    code: 'account-kind',
+    message: `"${a.name}" is ${KIND_LABEL[a.kind]} but its name sounds like a loan. If it was created by mistake, reverse its entries in Daily Updates and rename it in the Assets tab. Record loans with "Loan taken" and "Loan repaid".`,
+  };
+}
+/** Null when 
+ame may be created as a new account of kind on this side of the entry. */
+function newAccountProblem(name: string, kind: AccountKind, side: 'from' | 'to'): Problem | null {
+  if (kind !== 'liability' && LOAN_WORDS.test(name)) {
+    return {
+      code: 'account-kind',
+      message: `"${name}" sounds like a loan, and loans are liabilities. Use "Loan taken" to borrow (also when the money buys something, like a house) and "Loan repaid" to repay.`,
+    };
+  }
+  if (kind === 'asset' && side === 'from') {
+    return {
+      code: 'account-kind',
+      message: `"${name}" is not one of your accounts yet, and money can only leave an account that exists. If this is a loan, use "Loan taken". Otherwise move money into the account first.`,
+    };
+  }
+  if (kind === 'liability' && side === 'to') {
+    return {
+      code: 'account-kind',
+      message: `There is no loan named "${name}". To record a new loan use "Loan taken".`,
+    };
+  }
+  return null;
+}
+
 function findSide(
   name: string,
   kind: AccountKind,
@@ -80,11 +118,12 @@ function findSide(
   const all = [...accounts.values()];
   const exact = all.find((a) => norm(a.name) === n);
   if (exact) {
-    if (exact.kind === kind) return { account: exact, isNew: false };
+    if (exact.kind === kind) return looksLikeLoan(exact) ? { problem: loanLikeAccountProblem(exact) } : { account: exact, isNew: false };
+    const loanHint = exact.kind === 'liability' ? ' For loans use "Loan taken" or "Loan repaid".' : '';
     return {
       problem: {
         code: 'account-kind',
-        message: `"${exact.name}" is ${KIND_LABEL[exact.kind]}, but ${KIND_LABEL[kind]} is needed here.`,
+        message: `"${exact.name}" is ${KIND_LABEL[exact.kind]}, but ${KIND_LABEL[kind]} is needed here.${loanHint}`,
       },
     };
   }
@@ -92,7 +131,7 @@ function findSide(
     const near = all.filter(
       (a) => a.kind === kind && !a.system && norm(a.name).length >= 3 && (norm(a.name).includes(n) || n.includes(norm(a.name))),
     );
-    if (near.length === 1) return { account: near[0], isNew: false };
+    if (near.length === 1) return looksLikeLoan(near[0]) ? { problem: loanLikeAccountProblem(near[0]) } : { account: near[0], isNew: false };
     if (near.length > 1) {
       return {
         problem: {
@@ -102,7 +141,10 @@ function findSide(
       };
     }
   }
-  void code;
+  // A new account is only allowed where it grows naturally: an asset or expense that receives, a liability
+  // or income source that gives. Otherwise it would start out negative (the -100 crore home loan bug).
+  const problem = newAccountProblem(name.trim(), kind, code);
+  if (problem) return { problem };
   const key = makeId('acct');
   return { account: { key, name: name.trim(), kind, category: null, asOfDate: date }, isNew: true };
 }
@@ -194,6 +236,10 @@ export function resolveDraft(draft: EntryDraft, ctx: ResolveContext): ResolveRes
       { account: toAcct.account.key, debitRupees: amt, creditRupees: 0 },
       { account: fromAcct!.account.key, debitRupees: 0, creditRupees: amt },
     ];
+    if (fromAcct && !fromAcct.isNew && fromAcct.account.kind === 'asset') {
+      const after = ctx.balanceOf(fromAcct.account.key) - amt;
+      if (after < 0) warnings.push(`This leaves ${fromN} at ${formatRupees(after)}.`);
+    }
     const m = formatRupees(amt);
     head = ({
       income: `Received ${m} from ${fromN} into ${toN}`,

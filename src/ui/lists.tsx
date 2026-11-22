@@ -2,16 +2,42 @@ import { useState } from 'react';
 import { draftFromEntry, resolveAny } from '../chat/draft';
 import { formatDate, todayIso } from '../dates/dates';
 import { formatRupees } from '../money/money';
-import { commitCorrection, commitReversal, type LoadedData } from '../store/repo';
+import type { Entry } from '../ledger/types';
+import { commitCorrection, commitRename, commitReversal, type LoadedData } from '../store/repo';
 import { budgetProgress, goalProgress } from '../targets/progress';
 import type { Vault } from '../store/vault';
 import { ConfirmCard } from './ConfirmCard';
 
 const cell = { paddingRight: 16, textAlign: 'left' as const };
 
-export function AccountList({ data, kind }: { data: LoadedData; kind: 'asset' | 'liability' }) {
+export function AccountList({
+  data,
+  kind,
+  vault,
+  onChanged,
+}: {
+  data: LoadedData;
+  kind: 'asset' | 'liability';
+  vault: Vault;
+  onChanged: () => void;
+}) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const rows = [...data.accounts.values()].filter((a) => a.kind === kind && !a.system);
   if (rows.length === 0) return <p>No {kind} accounts yet.</p>;
+
+  async function save(key: string) {
+    setError('');
+    try {
+      await commitRename(vault, data, key, name);
+      setEditing(null);
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   return (
     <table aria-label={kind === 'asset' ? 'Assets' : 'Liabilities'}>
       <thead>
@@ -19,24 +45,46 @@ export function AccountList({ data, kind }: { data: LoadedData; kind: 'asset' | 
           <th style={cell}>Name</th>
           <th style={cell}>Since</th>
           <th style={cell}>Balance</th>
+          <th />
         </tr>
       </thead>
       <tbody>
         {rows.map((a) => (
           <tr key={a.key}>
             <td style={cell}>
-              {a.name}
-              {a.category ? ` (${a.category})` : ''}
+              {editing === a.key ? (
+                <input aria-label={`New name for ${a.name}`} value={name} onChange={(e) => setName(e.target.value)} />
+              ) : (
+                <>
+                  {a.name}
+                  {a.category ? ` (${a.category})` : ''}
+                </>
+              )}
+              {editing === a.key && error && <div role="alert" style={{ color: 'var(--bad)' }}>{error}</div>}
             </td>
             <td style={cell}>{formatDate(a.asOfDate)}</td>
             <td style={cell}>{formatRupees(data.ledger.balance(a.key))}</td>
+            <td>
+              {editing === a.key ? (
+                <>
+                  <button onClick={() => void save(a.key)}>Save name</button>{' '}
+                  <button onClick={() => setEditing(null)}>Cancel</button>
+                </>
+              ) : (
+                <button
+                  aria-label={`Rename ${a.name}`}
+                  onClick={() => { setEditing(a.key); setName(a.name); setError(''); }}
+                >
+                  Rename
+                </button>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>
     </table>
   );
 }
-
 export function GoalsList({ data }: { data: LoadedData }) {
   const today = todayIso();
   if (data.goals.size === 0) return <p>No goals yet. Try “Save 3L for an emergency fund by Dec 2027”.</p>;
@@ -49,7 +97,7 @@ export function GoalsList({ data }: { data: LoadedData }) {
             <b>{g.name}</b>: {formatRupees(p.saved)} of {formatRupees(p.target)} ({p.percent}%)
             {g.targetDate ? `, by ${formatDate(g.targetDate)}` : ''} {p.done ? '✔ reached' : `, ${formatRupees(p.remaining)} to go`}
             <div>
-              <progress value={Math.min(p.percent, 100)} max={100} aria-label={`${g.name} progress`} style={{ width: 240 }} />
+              <progress className={p.done ? 'glow' : undefined} value={Math.min(p.percent, 100)} max={100} aria-label={`${g.name} progress`} style={{ width: 240 }} />
             </div>
             <div style={{ opacity: 0.7 }}>Saved in {data.accounts.get(g.account)?.name ?? 'unknown account'}</div>
           </li>
@@ -69,11 +117,11 @@ export function BudgetsList({ data }: { data: LoadedData }) {
         return (
           <li key={key} style={{ margin: '8px 0' }}>
             <b>{b.name}</b> this month: {formatRupees(p.spent)} of {formatRupees(p.limit)} ({p.percent}%)
-            {p.over && <span style={{ color: 'crimson' }}> Over by {formatRupees(-p.remaining)}</span>}
-            {p.near && <span style={{ color: '#a60' }}> Nearly used up, {formatRupees(p.remaining)} left</span>}
+            {p.over && <span style={{ color: 'var(--bad)' }}> Over by {formatRupees(-p.remaining)}</span>}
+            {p.near && <span style={{ color: 'var(--warn)' }}> Nearly used up, {formatRupees(p.remaining)} left</span>}
             {!p.over && !p.near && <span>, {formatRupees(p.remaining)} left</span>}
             <div>
-              <progress value={Math.min(p.percent, 100)} max={100} aria-label={`${b.name} budget used`} style={{ width: 240 }} />
+              <progress className={p.over ? 'shake' : p.near ? 'pulse-warn' : undefined} value={Math.min(p.percent, 100)} max={100} aria-label={`${b.name} budget used`} style={{ width: 240 }} />
             </div>
           </li>
         );
@@ -86,10 +134,12 @@ export function DailyList({
   data,
   vault,
   onChanged,
+  onEntry,
 }: {
   data: LoadedData;
   vault: Vault;
   onChanged: () => void;
+  onEntry?: (entry: Entry) => void;
 }) {
   const [open, setOpen] = useState<{ key: string; mode: 'reverse' | 'correct' } | null>(null);
   const [reason, setReason] = useState('');
@@ -111,7 +161,8 @@ export function DailyList({
   async function reverse(key: string) {
     setError('');
     try {
-      await commitReversal(vault, data, key, reason.trim());
+      const rKey = await commitReversal(vault, data, key, reason.trim());
+      onEntry?.(data.ledger.entries.get(rKey)!);
       setOpen(null);
       setReason('');
       onChanged();
@@ -132,6 +183,11 @@ export function DailyList({
             <span style={{ textDecoration: reversed ? 'line-through' : 'none' }}>
               <b>{formatDate(e.date)}</b> {e.note}
             </span>
+            <div style={{ opacity: 0.75, fontSize: 13 }}>
+              {e.lines
+                .map((l) => `${l.debitRupees > 0 ? 'Dr' : 'Cr'} ${data.accounts.get(l.account)?.name ?? '?'} ${formatRupees(l.debitRupees || l.creditRupees)}`)
+                .join('  ·  ')}
+            </div>
             {reversed && <i> (reversed)</i>}
             {e.kind === 'reversal' && <i> [reversal]</i>}
             {e.kind === 'correction' && <i> [correction]</i>}{' '}
@@ -161,7 +217,8 @@ export function DailyList({
                   const r = resolveAny(draft, ctx);
                   if (!r.ok) throw new Error(r.problems.map((p) => p.message).join(' '));
                   if (r.kind !== 'entry') throw new Error('Only ledger entries can be corrected.');
-                  await commitCorrection(vault, data, key, why, r.newAccounts, r.entry);
+                  const done = await commitCorrection(vault, data, key, why, r.newAccounts, r.entry);
+                  onEntry?.(data.ledger.entries.get(done.correction)!);
                   setOpen(null);
                   onChanged();
                 }}

@@ -3,6 +3,7 @@ import { proposeEntry, type Outcome, type PromptHost } from '../chat/proposal';
 import { resolveAny, type EntryDraft } from '../chat/draft';
 import { TAB_LABELS, TAB_SCOPES, type ChatTabId } from '../chat/intents';
 import { formatDate, todayIso } from '../dates/dates';
+import type { Entry } from '../ledger/types';
 import { commitEntry, commitTarget, type LoadedData } from '../store/repo';
 import type { Vault } from '../store/vault';
 import { ConfirmCard } from './ConfirmCard';
@@ -34,6 +35,7 @@ export function ChatPanel({
   vault,
   data,
   onChanged,
+  onEntry,
   onSwitchTab,
   incoming,
 }: {
@@ -42,6 +44,7 @@ export function ChatPanel({
   vault: Vault;
   data: LoadedData;
   onChanged: () => void;
+  onEntry?: (entry: Entry) => void;
   onSwitchTab: (tab: ChatTabId, text: string) => void;
   incoming?: Incoming;
 }) {
@@ -105,6 +108,7 @@ export function ChatPanel({
     if (r.kind === 'entry') {
       const key = await commitEntry(vault, data, r.newAccounts, r.entry);
       savedText = `Saved ${formatDate(r.entry.date)}: ${r.entry.note} (${key})`;
+      onEntry?.(r.entry);
     } else {
       await commitTarget(vault, data, r.newAccounts, r.kind === 'budget' ? { kind: 'budget', key: r.key, budget: r.budget } : { kind: 'goal', key: r.key, goal: r.goal });
       savedText = `Saved: ${r.summary}`;
@@ -116,7 +120,7 @@ export function ChatPanel({
   const lastMessage = [...items].reverse().find((i) => i.kind === 'user') as { text: string } | undefined;
 
   return (
-    <section aria-label={`${TAB_LABELS[tab]} chat`} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 12, margin: '8px 0' }}>
+    <section aria-label={`${TAB_LABELS[tab]} chat`} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, margin: '8px 0' }}>
       <div style={{ minHeight: 40 }}>
         {items.map((it) => {
           if (it.kind === 'user') return <div key={it.id}><b>You:</b> {it.text}</div>;

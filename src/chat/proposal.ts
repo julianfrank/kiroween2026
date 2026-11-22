@@ -83,6 +83,7 @@ export function buildPrompt(args: {
     '- fromAccount, toAccount: account names. Use "" if the user did not say.',
     `Existing accounts. Assets: ${names('asset')}. Liabilities: ${names('liability')}. Income: ${names('income')}. Expenses: ${names('expense')}.`,
     'Use an existing name when it fits. Do not invent amounts or dates.',
+    'A loan, mortgage or EMI is NEVER a transfer or an asset. Money from a lender is "borrow"; paying a lender back is "repay".',
     `The user is in the "${TAB_LABELS[args.tab]}" tab, which handles: ${here.length ? here.join(', ') : 'nothing yet'}.`,
     `Message: ${JSON.stringify(args.message)}`,
   ].join('\n');
@@ -150,20 +151,22 @@ export async function proposeEntry(host: PromptHost, args: ProposeArgs): Promise
         problems: [{ code: 'intent', message: 'I could not tell what to record. Pick the kind of entry and fill in the details.' }],
       };
     }
-    if (!TAB_SCOPES[args.tab].includes(p.intent)) {
-      return { type: 'redirect', tab: INTENTS[p.intent].home, draft: draftFrom(p, args.message) };
-    }
-
     const draft = draftFrom(p, args.message);
     const r = resolveAny(draft, args);
-    if (r.ok) return { type: 'confirm', draft, resolved: r };
 
-    const fixable = r.problems.filter((x) => x.code === 'account-kind');
+    // A wrong kind of account (a loan treated as an asset, say) is the model's mistake: ask once more,
+    // before deciding which tab the message belongs to.
+    const fixable = r.ok ? [] : r.problems.filter((x) => x.code === 'account-kind');
     if (fixable.length && attempt === 0) {
       lastError = fixable.map((x) => x.message).join(' ');
       extra = `\nYour previous reply was rejected: ${lastError} Reply again with valid JSON only.`;
       continue;
     }
+
+    if (!TAB_SCOPES[args.tab].includes(p.intent)) {
+      return { type: 'redirect', tab: INTENTS[p.intent].home, draft };
+    }
+    if (r.ok) return { type: 'confirm', draft, resolved: r };
     return { type: 'needs-input', draft: { ...draft, source: 'manual-form' }, problems: r.problems };
   }
 

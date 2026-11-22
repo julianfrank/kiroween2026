@@ -1,4 +1,5 @@
 import { formatRupees } from '../money/money';
+import { C } from './palette';
 
 export interface BarItem {
   label: string;
@@ -24,8 +25,8 @@ export function Bars({ items, title }: { items: BarItem[]; title: string }) {
               <b>{i.label}</b> {formatRupees(i.value)}
               {i.note && <span style={{ opacity: 0.8 }}> {i.note}</span>}
             </div>
-            <div style={{ background: 'rgba(128,128,128,0.2)', height: 12, borderRadius: 6, maxWidth: 420 }}>
-              <div style={{ width: `${pct}%`, height: '100%', borderRadius: 6, background: i.color ?? '#1565c0' }} />
+            <div style={{ background: 'var(--bar-bg)', height: 12, borderRadius: 6, maxWidth: 420 }}>
+              <div style={{ width: `${pct}%`, height: '100%', borderRadius: 6, background: i.color ?? C.blue }} />
             </div>
           </li>
         );

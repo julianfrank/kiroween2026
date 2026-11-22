@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PromptHost } from '../chat/proposal';
 import { formatDate, todayIso } from '../dates/dates';
 import { buildSetup, differenceEquity, evaluateDraft, type DraftRow } from '../setup/setup';
 import type { LoadedData } from '../store/repo';
 import type { Vault } from '../store/vault';
+import { ENTRY_ANIMATION_MS, EntryAnimation } from '../theme/EntryAnimation';
+import { AnimatedNumber } from './AnimatedNumber';
 import { AppShell } from './AppShell';
 
 afterEach(cleanup);
@@ -138,6 +140,62 @@ describe('the six tabs', () => {
     expect(screen.getByText('The start date must not be after the end date.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Last month' }));
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('the theme switches the moment a saved entry takes net worth below zero, and the entry plays its animation', async () => {
+    const big = { intent: 'expense', amount: '200000', date: '', fromAccount: 'Cash', toAccount: 'Rent' };
+    const { Harness } = world([big]);
+    const { container } = render(<Harness />);
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(container.querySelector('.ambient')?.getAttribute('data-state')).toBe('light');
+    expect(container.querySelector('.cobweb')).toBeNull();
+
+    fireEvent.click(tab('Daily Updates'));
+    await say('Daily Updates chat', 'Paid 200000 for rent');
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
+
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    expect(container.querySelector('.ambient')?.getAttribute('data-state')).toBe('dark');
+    expect(container.querySelector('.cobweb')).not.toBeNull();
+    expect(screen.getByText(/Lights out/)).toBeTruthy();
+    const anim = await screen.findByRole('status', { name: /Money spent: ₹2,00,000, Cash to Rent/ });
+    expect(anim.className).toContain('v-poof');
+  });
+
+  it('counts the net worth to its new value', async () => {
+    const { rerender } = render(<AnimatedNumber value={1000} />);
+    expect(screen.getByText('₹1,000')).toBeTruthy(); // no animation on first render
+    rerender(<AnimatedNumber value={5000} />);
+    await waitFor(() => expect(screen.getByText('₹5,000')).toBeTruthy(), { timeout: 2000 });
+  });
+
+  it('the entry animation removes itself after it has played', () => {
+    vi.useFakeTimers();
+    try {
+      const done = vi.fn();
+      render(<EntryAnimation event={{ id: 1, variant: 'flow', from: 'Cash', to: 'Bank', amount: 500, caption: 'Moved' }} onDone={done} />);
+      expect(screen.getByRole('status', { name: 'Moved: ₹500, Cash to Bank' })).toBeTruthy();
+      vi.advanceTimersByTime(ENTRY_ANIMATION_MS - 1);
+      expect(done).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(2);
+      expect(done).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('Assets: an account can be renamed, and a duplicate name is refused', async () => {
+    const { Harness } = world([expense]);
+    render(<Harness />);
+    fireEvent.click(tab('Assets'));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename Cash' }));
+    fireEvent.change(screen.getByLabelText('New name for Cash'), { target: { value: 'Savings' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('already uses this name');
+    fireEvent.change(screen.getByLabelText('New name for Cash'), { target: { value: 'Wallet' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    await waitFor(() => expect(within(screen.getByRole('table', { name: 'Assets' })).getByText('Wallet')).toBeTruthy());
+    expect(within(screen.getByRole('table', { name: 'Assets' })).queryByText('Cash')).toBeNull();
   });
 
   it('Budgets: chat sets a budget and the list shows spending against it', async () => {

@@ -80,6 +80,25 @@ export async function commitTarget(
   }
 }
 
+/**
+ * Rename an account. Entries refer to accounts by key, so history is untouched (old notes keep the old
+ * name as plain text). The app's own accounts cannot be renamed.
+ */
+export async function commitRename(vault: Vault, data: LoadedData, accountKey: string, newName: string): Promise<void> {
+  const account = data.accounts.get(accountKey);
+  if (!account) throw new Error('Unknown account.');
+  if (account.system) throw new Error('This account is used by the app and cannot be renamed.');
+  const name = newName.trim();
+  if (name === '') throw new Error('Give the account a name.');
+  const same = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if ([...data.accounts.values()].some((a) => a.key !== accountKey && same(a.name) === same(name))) {
+    throw new Error('Another account already uses this name.');
+  }
+  const renamed = { ...account, name };
+  await putAccount(vault, renamed);
+  data.accounts.set(accountKey, renamed);
+}
+
 /** Post a Reversal of `key`, dated the same day as the original so period totals cancel exactly. */
 export async function commitReversal(vault: Vault, data: LoadedData, key: string, reason: string): Promise<string> {
   const original = data.ledger.entries.get(key);

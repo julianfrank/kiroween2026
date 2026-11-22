@@ -118,7 +118,7 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
                   Remove
                 </button>
                 {ev.rowErrors.get(r.id) && (
-                  <div role="alert" style={{ color: 'crimson' }}>
+                  <div role="alert" style={{ color: 'var(--bad)' }}>
                     {ev.rowErrors.get(r.id)}
                   </div>
                 )}
@@ -153,7 +153,7 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
           Use difference
         </button>
         {ev.equityError && (
-          <div role="alert" style={{ color: 'crimson' }}>
+          <div role="alert" style={{ color: 'var(--bad)' }}>
             {ev.equityError}
           </div>
         )}
@@ -164,7 +164,7 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
         style={{
           margin: '16px 0',
           padding: 16,
-          border: `3px solid ${balanced ? 'seagreen' : 'crimson'}`,
+          border: `3px solid ${balanced ? 'var(--good)' : 'var(--bad)'}`,
           borderRadius: 8,
         }}
       >
@@ -173,7 +173,7 @@ export function SetupScreen({ onDone }: { onDone: (result: SetupResult) => Promi
           Liabilities {formatRupees(ev.liabilities)} + Opening Equity {formatRupees(ev.equity)} ={' '}
           {formatRupees(ev.liabilities + ev.equity)}
         </div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: balanced ? 'seagreen' : 'crimson' }}>
+        <div style={{ fontSize: 28, fontWeight: 700, color: balanced ? 'var(--good)' : 'var(--bad)' }}>
           Imbalance: {formatRupees(ev.imbalance)}
         </div>
         <div>{imbalanceText}</div>

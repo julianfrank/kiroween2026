@@ -50,11 +50,11 @@ Derived, not stored: balances, Net Worth, budget progress, goal progress, chart 
 - **Test step:** a short fixed prompt whose reply must contain an expected token.
 - **Proposal schema** (passed as `responseConstraint`):
   - `intent`: `income | expense | transfer | borrow | repay | revalue | other`. An intent outside the current tab's scope makes the app offer a switch to that intent's home tab.
-  - `amount`: the amount copied as text exactly as the user wrote it (`"30L"`), `""` when none. The model never converts units: it turned 30L into 3 crore in testing. `src/chat/amounts.ts` reads the amounts in the user's message itself. One amount in the message wins over the model. Several amounts: the model's choice is kept only if it is one of them, else the card asks. For `revalue` it is the new total value.
+  - `amount`: the amount copied as text exactly as the user wrote it (`"30L"`), `""` when none. The model never converts units: it turned 30L into 3 crore in testing. `src/chat/amounts.ts` reads the amounts in the user's message itself. The amount comes only from the user's message: one amount wins over the model, several amounts keep the model's choice only if it is one of them, and no number means the card asks (the model once invented 100 crore for a sentence with no number). For `revalue` it is the new total value.
   - `date`: the user's date words copied as written, or an empty string
   - `fromAccount`, `toAccount`: account names or empty strings. Money flows from `fromAccount` (credit) to `toAccount` (debit). The app matches names to existing accounts, or proposes a new account whose kind comes from the intent.
   - The model does not write the note. The app builds it from the fields and appends what the user said.
-- The app builds the real balanced Entry lines from the proposal. The model never outputs debit and credit amounts.
+- Account rules: new accounts are proposed only where they grow naturally (asset or expense on the debit side, liability or income on the credit side). Names that look like loans cannot become assets, income or expenses. Violations are `account-kind` problems and trigger the one retry.`n- The app builds the real balanced Entry lines from the proposal. The model never outputs debit and credit amounts.
 - **Prompt context:** system prompt, today's date, the tab's allowed intents, and the list of Account names relevant to the tab. No Ledger history is sent.
 - **Session lifecycle:** one global session. Destroy on import. Rebuild when `contextUsage / contextWindow` passes 0.8. After destroy, any call is expected to reject, and a test asserts this. The tab closing frees everything.
 - **Failure path:** validate, retry once with the error text, then ask for the missing field and show the manual form pre-filled.
@@ -69,7 +69,7 @@ State: list of opening lines with `asOfDate`, plus Opening Equity. `imbalance = 
 - **Sub-tabs** (each is a pure data builder plus a d3 view): Income vs Expense vs Budget trend (12 months), Income vs Savings/Investments vs Goals trend, Net worth over time (month-end), Expense breakdown, Budget utilisation, Goal progress with projected completion (average monthly contribution), Liabilities summary.
 
 ## 8. Theme and animation
-- `netWorthState(netWorth, totalAssets)`: Dark if `netWorth < 0`, Twilight if `|netWorth| ≤ 0.05 × totalAssets`, otherwise Light. Evaluated after each committed Entry and at load.
+- `netWorthState(netWorth, totalAssets)`: Twilight if `|netWorth| ≤ 0.05 × totalAssets` (a band on both sides of zero; total assets below zero count as zero), otherwise Light if `netWorth > 0` and Dark if `netWorth < 0`. Pure function, no hysteresis, recomputed on every render so it changes the moment an Entry is saved. Chart colours are CSS variables (`--c-*`) with a light and a night palette.
 - Light: white and pale grey "Office" surfaces, orange and purple accents, small pumpkin and ghost touches. Dark: near-black, orange, purple and bone-white, bats and cobwebs. Twilight: dusk gradient between the two.
 - Animations (CSS and SVG): coins flow from source Account to target Account on each confirmed Entry, a net worth counter animates, positive states show gentle fireflies, negative states show flickering lights. Always on.
 - Colour pairs must keep readable contrast for numbers in all three states.

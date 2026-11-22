@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Bars } from '../charts/Bars';
+import { C } from '../charts/palette';
 import {
   actualSankey, budgetUtilisation, expenseBreakdown, goalProjections, incomeExpenseTrend,
   lastMonths, liabilitiesSummary, netWorthSeries, plannedSankey, savingsTrend,
@@ -9,6 +10,8 @@ import { SankeyChart } from '../charts/Sankey';
 import { formatDate, monthRange, parseDisplayDate, todayIso } from '../dates/dates';
 import { addDays } from '../dates/resolve';
 import { formatRupees } from '../money/money';
+import { netWorthState } from '../theme/theme';
+import { AnimatedNumber } from './AnimatedNumber';
 import type { LoadedData } from '../store/repo';
 
 type Sub = 'trend' | 'savings' | 'networth' | 'expenses' | 'budgets' | 'goals' | 'liabilities';
@@ -60,8 +63,8 @@ export function Dashboard({ data }: { data: LoadedData }) {
 
   return (
     <div>
-      <p style={{ fontSize: 24, margin: '4px 0' }}>
-        Net worth <b>{formatRupees(assets - liabilities)}</b>
+      <p className="net-worth-figure" data-state={netWorthState(assets - liabilities, assets)} style={{ margin: '4px 0' }}>
+        Net worth <b><AnimatedNumber value={assets - liabilities} /></b>
       </p>
       <p style={{ margin: '4px 0' }}>
         Assets {formatRupees(assets)}, Liabilities {formatRupees(liabilities)}
@@ -106,7 +109,7 @@ export function Dashboard({ data }: { data: LoadedData }) {
             {label}
           </button>
         ))}
-        {rangeError && <div role="alert" style={{ color: 'crimson' }}>{rangeError}</div>}
+        {rangeError && <div role="alert" style={{ color: 'var(--bad)' }}>{rangeError}</div>}
         <div style={{ opacity: 0.7 }}>
           Showing {formatDate(range.from)} to {formatDate(range.to)}. Opening balances are not counted as activity.
         </div>
@@ -144,7 +147,7 @@ export function Dashboard({ data }: { data: LoadedData }) {
             items={expenseBreakdown(data, range.from, range.to).map((e) => ({
               label: e.name,
               value: e.value,
-              color: e.revaluation ? '#7b1fa2' : '#c62828',
+              color: e.revaluation ? C.purple : C.red,
             }))}
           />
         )}
@@ -155,7 +158,7 @@ export function Dashboard({ data }: { data: LoadedData }) {
               label: b.name,
               value: b.spent,
               of: b.limit,
-              color: b.over ? '#c62828' : b.near ? '#f9a825' : '#2e7d32',
+              color: b.over ? C.red : b.near ? C.amber : C.green,
               note: `of ${formatRupees(b.limit)} (${b.percent}%)${b.over ? ', over the limit' : ''}`,
             }))}
           />
@@ -167,7 +170,7 @@ export function Dashboard({ data }: { data: LoadedData }) {
               label: g.name,
               value: g.saved,
               of: g.target,
-              color: g.done || g.onTrack ? '#2e7d32' : g.onTrack === false ? '#c62828' : '#1565c0',
+              color: g.done || g.onTrack ? C.green : g.onTrack === false ? C.red : C.blue,
               note: g.done
                 ? `of ${formatRupees(g.target)}, reached`
                 : `of ${formatRupees(g.target)} (${g.percent}%). ${
@@ -182,7 +185,7 @@ export function Dashboard({ data }: { data: LoadedData }) {
           <div>
             <Bars
               title="Liabilities"
-              items={liabilitiesSummary(data).items.map((l) => ({ label: l.name, value: l.balance, color: '#ad1457' }))}
+              items={liabilitiesSummary(data).items.map((l) => ({ label: l.name, value: l.balance, color: C.pink }))}
             />
             <p>Total owed: <b>{formatRupees(liabilitiesSummary(data).total)}</b></p>
           </div>

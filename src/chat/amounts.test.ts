@@ -28,10 +28,19 @@ describe('the app reads amounts, not the model', () => {
     expect(chooseAmountText('paid 500 of the 2000 owed', '7777')).toBe('');
   });
 
-  it('with no amount in the message, falls back to readable model text only', () => {
+  it('never takes an amount from the model when the message has none (it once invented 100 crore)', () => {
     expect(chooseAmountText('paid the rent', '')).toBe('');
-    expect(chooseAmountText('paid five thousand', '5000')).toBe('5000');
-    expect(chooseAmountText('asset is worthless', '0')).toBe('0');
+    expect(chooseAmountText('Dubakur Bank - Home Loan is a liability and not an asset', '100cr')).toBe('');
+    expect(chooseAmountText('paid five thousand', '5000')).toBe(''); // words are not read: the user types it on the card
+    expect(chooseAmountText('the flat is worthless', '0')).toBe('0');
+    expect(chooseAmountText('pay the rent', '0')).toBe('');
+  });
+
+  it('a single small bare number is still an amount, several are not guessed', () => {
+    expect(chooseAmountText('paid 50 for tea', '5')).toBe('50');
+    expect(chooseAmountText('paid 3 days ago 50 for tea', '')).toBe('50');
+    expect(chooseAmountText('bought 2 bags and 3 pens', '')).toBe('');
+    expect(chooseAmountText('paid in 2026 for rent', '')).toBe('');
   });
 });
 

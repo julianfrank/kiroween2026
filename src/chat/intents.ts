@@ -70,7 +70,7 @@ export const INTENTS: Record<IntentId, IntentDef> = {
   borrow: {
     id: 'borrow',
     label: 'Loan taken',
-    hint: 'the user borrowed money. fromAccount = the lender as "Loan - Name", toAccount = the account that received the money.',
+    hint: 'the user borrowed money from a person, bank or lender, including a home loan or mortgage, even when the money was used to buy something. fromAccount = the loan, named "Loan - Name" or "<Lender> - Home Loan", toAccount = the account or asset that received the money or was bought.',
     toKind: 'asset', toLabel: 'Money received into',
     fromKind: 'liability', fromLabel: 'Borrowed from (loan)',
     home: 'liabilities',
